@@ -1,0 +1,14 @@
+# Actualmente existe un único owner, pero la estructura está preparada para evolucionar a equipos independientes.
+
+* @MatiasNeira1
+
+/.github/ @MatiasNeira1
+/backend/ @MatiasNeira1
+/frontend/ @MatiasNeira1
+/infra/ @MatiasNeira1
+/contracts/ @MatiasNeira1
+/docs/ @MatiasNeira1
+/load-tests/ @MatiasNeira1
+/platform/ @MatiasNeira1
+/scripts/ @MatiasNeira1
+/tests/ @MatiasNeira1
