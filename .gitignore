@@ -1,0 +1,69 @@
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Java / Maven
+target/
+*.class
+.mvn/timing.properties
+
+# Gradle
+.gradle/
+build/
+
+# Node / React
+node_modules/
+dist/
+coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Variables de entorno
+.env
+.env.*
+!.env.example
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Logs
+*.log
+logs/
+
+# Testing
+test-results/
+playwright-report/
+k6-results/
+
+# IDE / editor
+.vscode/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temporales
+tmp/
+temp/
+*.tmp
+
+# Seguridad
+*.pem
+*.key
+*.pfx
+*.p12

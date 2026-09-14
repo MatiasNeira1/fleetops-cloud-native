@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Guía de contribución
+    url: https://github.com/MatiasNeira1/fleetops-cloud-native/blob/main/CONTRIBUTING.md
+    about: Revisa el flujo Git, convenciones de commits, ramas y Pull Requests antes de contribuir.

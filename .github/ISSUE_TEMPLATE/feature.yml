@@ -1,0 +1,48 @@
+name: Feature
+description: Proponer una nueva funcionalidad o mejora para FleetOps.
+title: "[Feature]: "
+labels: ["feature"]
+body:
+  - type: textarea
+    id: necesidad
+    attributes:
+      label: Problema o necesidad
+      description: ¿Qué problema resuelve esta funcionalidad?
+    validations:
+      required: true
+  - type: textarea
+    id: propuesta
+    attributes:
+      label: Propuesta
+      description: Describe la solución propuesta.
+    validations:
+      required: true
+  - type: textarea
+    id: valor
+    attributes:
+      label: Valor para FleetOps
+      description: Explica el valor técnico, de producto o de aprendizaje.
+    validations:
+      required: true
+  - type: input
+    id: componente
+    attributes:
+      label: Componente afectado
+      placeholder: backend, frontend, infra, contracts, docs, scripts, platform/local
+    validations:
+      required: true
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Criterios de aceptación
+      description: Lista las condiciones mínimas para considerar completa la funcionalidad.
+      placeholder: |
+        - ...
+        - ...
+    validations:
+      required: true
+  - type: textarea
+    id: consideraciones
+    attributes:
+      label: Consideraciones técnicas
+      description: Riesgos, restricciones, dependencias o decisiones técnicas relevantes.
