@@ -19,10 +19,32 @@ services:
       start_period: 10s
     networks:
       - fleetops-local
+  rabbitmq:
+    image: rabbitmq:4.1.8-management
+    container_name: fleetops-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-fleetops}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-change_me}
+    ports:
+      - "${RABBITMQ_CONTAINER_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_CONTAINER_PORT:-15672}:15672"
+    volumes:
+      - fleetops-rabbitmq-data:/var/lib/rabbitmq
 
+    healthcheck:
+      test: [ "CMD", "rabbitmq-diagnostics", "-q", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - fleetops-local
 volumes:
   fleetops-postgres-data:
     name: fleetops-postgres-data
+  fleetops-rabbitmq-data:
+    name: fleetops-rabbitmq-data
 
 networks:
   fleetops-local:
