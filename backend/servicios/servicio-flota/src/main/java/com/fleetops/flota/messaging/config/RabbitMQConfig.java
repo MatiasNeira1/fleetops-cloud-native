@@ -1,11 +1,12 @@
 package com.fleetops.flota.messaging.config;
-
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.amqp.core.*;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
+@EnableConfigurationProperties(RabbitTopologyProperties.class)
 public class RabbitMQConfig {
 
     public static final String EXCHANGE_NAME = "logs_direct_exchange";
