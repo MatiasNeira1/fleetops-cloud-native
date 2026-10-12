@@ -77,4 +77,8 @@ public class Alert {
     public String getDescription() { return description; }
     public AlertStatus getStatus() { return status; }
     public Instant getDetectedAt() { return detectedAt; }
+
+    public void resolve() {
+        this.status = AlertStatus.RESOLVED;
+    }
 }

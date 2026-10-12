@@ -45,7 +45,33 @@ function App() {
   };
 
   useEffect(() => {
-    void loadTrips(false);
+    let isMounted = true;
+
+    async function loadInitialTrips() {
+      try {
+        const activeTrips = await getActiveTrips();
+        if (!isMounted) {
+          return;
+        }
+        setTrips(activeTrips);
+        setSelectedTripId(activeTrips[0]?.id ?? null);
+      } catch {
+        if (!isMounted) {
+          return;
+        }
+        setError("No fue posible cargar los viajes activos.");
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void loadInitialTrips();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const filteredTrips = useMemo(() => {

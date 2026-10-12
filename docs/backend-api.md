@@ -1,6 +1,6 @@
 # API REST local de FleetOps
 
-Esta API expone las operaciones del panel operativo. El frontend conserva sus datos simulados y no se conecta a esta API en esta fase.
+Esta API expone las operaciones del panel operativo. El frontend consume estos endpoints mediante `VITE_API_BASE_URL` o mediante el proxy local de Vite.
 
 ## Flujo
 
@@ -24,7 +24,39 @@ La API escucha en `http://localhost:8080`. El script carga las variables Postgre
 
 Las credenciales `POSTGRES_USER`, `POSTGRES_PASSWORD`, `SPRING_RABBITMQ_USERNAME` y `SPRING_RABBITMQ_PASSWORD` son obligatorias; no tienen valores por defecto en Spring. En un contenedor conectado a la red Compose, configura `SPRING_RABBITMQ_ADDRESSES=rabbitmq-1:5672,rabbitmq-2:5672`.
 
-Los datos demo se insertan únicamente con el perfil `local` o `dev` y `FLEETOPS_DEMO_DATA_ENABLED=true`. El valor predeterminado está desactivado.
+Los datos demo se insertan únicamente con el perfil `local` o `dev` y `FLEETOPS_DEMO_DATA_ENABLED=true`. `.env.example` deja ese valor activo para poder probar endpoints REST de inmediato. Si la base ya tenía tablas pobladas, el inicializador no duplica datos; para volver a sembrar desde cero usa `./scripts/windows/local-clean.ps1` y levanta la infraestructura nuevamente.
+
+## Smoke test
+
+Con Docker arriba y el backend iniciado, ejecuta todos los endpoints principales con:
+
+```powershell
+./scripts/windows/api-smoke-test.ps1
+```
+
+En Bash:
+
+```bash
+./scripts/unix/api-smoke-test.sh
+```
+
+El smoke test espera `GET /actuator/health`, consulta viajes, detalle, alertas y posición, publica telemetría, crea un incidente y luego lo marca como `RESOLVED`.
+
+## Frontend
+
+El frontend lee `frontend/.env.local`:
+
+```dotenv
+VITE_API_BASE_URL=
+```
+
+En desarrollo local, deja la variable vacía para que el navegador llame rutas relativas como `/api/v1/trips`; `frontend/vite.config.ts` usa proxy hacia `http://localhost:8080`. Para apuntar directo a otro backend, configura:
+
+```dotenv
+VITE_API_BASE_URL=http://localhost:8080
+```
+
+Reinicia `npm run dev` cada vez que cambies variables `VITE_*`.
 
 ## Endpoints
 
@@ -140,7 +172,7 @@ Springdoc expone OpenAPI para revisión e importación posterior en APIM. La API
 
 ## Compatibilidad con React
 
-Los IDs, conductor, patente, estado, progreso y coordenadas corresponden conceptualmente con `frontend/src/types/fleet.ts`. El backend expresa ubicaciones como objetos numéricos y enums en inglés; el frontend usa etiquetas españolas y coordenadas de ruta `[latitud, longitud]`. El detalle entrega origen y destino, no geometría vial. Se requiere un adaptador y los servicios frontend siguen usando mocks.
+Los IDs, conductor, patente, estado, progreso y coordenadas corresponden conceptualmente con `frontend/src/types/fleet.ts`. El backend expresa ubicaciones como objetos numéricos y enums en inglés; el frontend usa etiquetas españolas y coordenadas de ruta `[latitud, longitud]`. `frontend/src/services/tripService.ts` adapta el contrato REST al modelo visual del dashboard.
 
 ## Pruebas
 

@@ -5,8 +5,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-fleetops}
-      POSTGRES_USER: ${POSTGRES_USER:-fleetops}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+      POSTGRES_USER: ${POSTGRES_USER:?Define POSTGRES_USER en .env para PostgreSQL local}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env para PostgreSQL local}
     ports:
       - "${POSTGRES_CONTAINER_PORT:-5432}:5432"
     volumes:
@@ -72,6 +72,38 @@ services:
       timeout: 5s
       retries: 12
       start_period: 30s
+    networks:
+      - fleetops-local
+
+  servicio-flota:
+    image: fleetops/servicio-flota:local
+    build:
+      context: ../../backend/servicios/servicio-flota
+      dockerfile: Dockerfile
+    container_name: fleetops-servicio-flota
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq-1:
+        condition: service_healthy
+      rabbitmq-2:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-fleetops}
+      POSTGRES_USER: ${POSTGRES_USER:?Define POSTGRES_USER en .env para el backend}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env para el backend}
+      SPRING_RABBITMQ_ADDRESSES: rabbitmq-1:5672,rabbitmq-2:5672
+      SPRING_RABBITMQ_USERNAME: ${SPRING_RABBITMQ_USERNAME:?Define SPRING_RABBITMQ_USERNAME en .env para el backend}
+      SPRING_RABBITMQ_PASSWORD: ${SPRING_RABBITMQ_PASSWORD:?Define SPRING_RABBITMQ_PASSWORD en .env para el backend}
+      FLEETOPS_DEMO_DATA_ENABLED: ${FLEETOPS_DEMO_DATA_ENABLED:-true}
+      FLEETOPS_TELEMETRY_MAX_SPEED_KPH: ${FLEETOPS_TELEMETRY_MAX_SPEED_KPH:-90}
+      FLEETOPS_TELEMETRY_MIN_FUEL_PERCENT: ${FLEETOPS_TELEMETRY_MIN_FUEL_PERCENT:-15}
+    ports:
+      - "8080:8080"
     networks:
       - fleetops-local
 volumes:
