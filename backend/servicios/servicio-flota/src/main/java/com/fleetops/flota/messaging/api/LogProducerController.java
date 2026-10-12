@@ -25,7 +25,8 @@ public class LogProducerController {
 
             logPublisher.publish(
                 level,
-                logMessage.message().trim()
+                logMessage.message().trim(),
+                logMessage.simulateFailure()
             );
 
             return ResponseEntity.ok(

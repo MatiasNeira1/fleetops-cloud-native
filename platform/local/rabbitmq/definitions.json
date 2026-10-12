@@ -1,0 +1,212 @@
+{
+  "vhosts": [
+    {
+      "name": "/"
+    }
+  ],
+  "exchanges": [
+    {
+      "name": "fleetops.logs.direct",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "fleetops.events.topic",
+      "vhost": "/",
+      "type": "topic",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    },
+    {
+      "name": "fleetops.dlx.direct",
+      "vhost": "/",
+      "type": "direct",
+      "durable": true,
+      "auto_delete": false,
+      "internal": false,
+      "arguments": {}
+    }
+  ],
+  "queues": [
+    {
+      "name": "fleetops.logs.all.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "fleetops.dlx.direct",
+        "x-dead-letter-routing-key": "fleetops.logs.all.dead"
+      }
+    },
+    {
+      "name": "fleetops.logs.errors.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "fleetops.dlx.direct",
+        "x-dead-letter-routing-key": "fleetops.logs.errors.dead"
+      }
+    },
+    {
+      "name": "fleetops.logs.security.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "fleetops.dlx.direct",
+        "x-dead-letter-routing-key": "fleetops.logs.security.dead"
+      }
+    },
+    {
+      "name": "fleetops.telemetry.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "fleetops.dlx.direct",
+        "x-dead-letter-routing-key": "fleetops.telemetry.dead"
+      }
+    },
+    {
+      "name": "fleetops.logs.all.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "fleetops.logs.errors.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "fleetops.logs.security.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "fleetops.telemetry.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    }
+  ],
+  "bindings": [
+    {
+      "source": "fleetops.logs.direct",
+      "vhost": "/",
+      "destination": "fleetops.logs.all.queue",
+      "destination_type": "queue",
+      "routing_key": "INFO",
+      "arguments": {}
+    },
+    {
+      "source": "fleetops.logs.direct",
+      "vhost": "/",
+      "destination": "fleetops.logs.all.queue",
+      "destination_type": "queue",
+      "routing_key": "WARNING",
+      "arguments": {}
+    },
+    {
+      "source": "fleetops.logs.direct",
+      "vhost": "/",
+      "destination": "fleetops.logs.all.queue",
+      "destination_type": "queue",
+      "routing_key": "ERROR",
+      "arguments": {}
+    },
+    {
+      "source": "fleetops.logs.direct",
+      "vhost": "/",
+      "destination": "fleetops.logs.errors.queue",
+      "destination_type": "queue",
+      "routing_key": "ERROR",
+      "arguments": {}
+    },
+    {
+      "source": "fleetops.logs.direct",
+      "vhost": "/",
+      "destination": "fleetops.logs.security.queue",
+      "destination_type": "queue",
+      "routing_key": "SECURITY",
+      "arguments": {}
+    },
+    {
+      "source": "fleetops.events.topic",
+      "vhost": "/",
+      "destination": "fleetops.logs.all.queue",
+      "destination_type": "queue",
+      "routing_key": "fleetops.#",
+      "arguments": {}
+    },
+    {
+      "source": "fleetops.events.topic",
+      "vhost": "/",
+      "destination": "fleetops.logs.errors.queue",
+      "destination_type": "queue",
+      "routing_key": "fleetops.*.error",
+      "arguments": {}
+    },
+    {
+      "source": "fleetops.events.topic",
+      "vhost": "/",
+      "destination": "fleetops.logs.security.queue",
+      "destination_type": "queue",
+      "routing_key": "fleetops.security.#",
+      "arguments": {}
+    },
+    {
+      "source": "fleetops.events.topic",
+      "vhost": "/",
+      "destination": "fleetops.telemetry.queue",
+      "destination_type": "queue",
+      "routing_key": "fleetops.telemetry.received",
+      "arguments": {}
+    },
+    {
+      "source": "fleetops.dlx.direct",
+      "vhost": "/",
+      "destination": "fleetops.logs.all.dlq",
+      "destination_type": "queue",
+      "routing_key": "fleetops.logs.all.dead",
+      "arguments": {}
+    },
+    {
+      "source": "fleetops.dlx.direct",
+      "vhost": "/",
+      "destination": "fleetops.logs.errors.dlq",
+      "destination_type": "queue",
+      "routing_key": "fleetops.logs.errors.dead",
+      "arguments": {}
+    },
+    {
+      "source": "fleetops.dlx.direct",
+      "vhost": "/",
+      "destination": "fleetops.logs.security.dlq",
+      "destination_type": "queue",
+      "routing_key": "fleetops.logs.security.dead",
+      "arguments": {}
+    },
+    {
+      "source": "fleetops.dlx.direct",
+      "vhost": "/",
+      "destination": "fleetops.telemetry.dlq",
+      "destination_type": "queue",
+      "routing_key": "fleetops.telemetry.dead",
+      "arguments": {}
+    }
+  ]
+}

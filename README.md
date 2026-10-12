@@ -64,6 +64,8 @@ FleetOps define inicialmente tres ambientes:
 
 Más detalle en [docs/environments.md](docs/environments.md).
 
+La configuración local de RabbitMQ en clúster de dos nodos está documentada en [docs/rabbitmq-local.md](docs/rabbitmq-local.md).
+
 ## Desarrollo local
 
 1. Copia el archivo de ejemplo:

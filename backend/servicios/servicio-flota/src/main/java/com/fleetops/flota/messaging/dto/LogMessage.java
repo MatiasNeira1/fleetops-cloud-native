@@ -1,4 +1,5 @@
 package com.fleetops.flota.messaging.dto;
+
 import jakarta.validation.constraints.NotBlank;
 
 public record LogMessage(
@@ -6,6 +7,8 @@ public record LogMessage(
     String level,
 
     @NotBlank(message = "message es obligatorio")
-    String message
+    String message,
+
+    boolean simulateFailure
 ) {
 }
