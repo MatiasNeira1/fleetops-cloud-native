@@ -1,4 +1,4 @@
-import { MessageSquare, Route, Truck } from "lucide-react";
+import { RadioTower, RefreshCw, TriangleAlert } from "lucide-react";
 import type { Trip } from "../types/fleet";
 import { StatusBadge } from "./StatusBadge";
 import { TripMap } from "./TripMap";
@@ -7,10 +7,17 @@ import { TripTimeline } from "./TripTimeline";
 
 interface TripDetailsProps {
   trip: Trip;
-  onAction: (message: string) => void;
+  onReportIncident: (trip: Trip) => void;
+  onSendTelemetry: (trip: Trip) => void;
+  onRefresh: () => void;
 }
 
-export function TripDetails({ trip, onAction }: TripDetailsProps) {
+export function TripDetails({
+  trip,
+  onReportIncident,
+  onSendTelemetry,
+  onRefresh,
+}: TripDetailsProps) {
   return (
     <section className="panel detail-panel" aria-labelledby="trip-detail-title">
       <div className="detail-header">
@@ -25,17 +32,17 @@ export function TripDetails({ trip, onAction }: TripDetailsProps) {
           </p>
         </div>
         <div className="action-row">
-          <button type="button" className="secondary-button" onClick={() => onAction(`Vehiculo asignado a ${trip.id}`)}>
-            <Truck aria-hidden="true" />
-            Asignar vehiculo
+          <button type="button" className="secondary-button" onClick={() => onRefresh()}>
+            <RefreshCw aria-hidden="true" />
+            Actualizar
           </button>
-          <button type="button" className="secondary-button" onClick={() => onAction(`Contacto abierto con ${trip.driver}`)}>
-            <MessageSquare aria-hidden="true" />
-            Contactar conductor
+          <button type="button" className="secondary-button" onClick={() => onSendTelemetry(trip)}>
+            <RadioTower aria-hidden="true" />
+            Enviar telemetria
           </button>
-          <button type="button" className="primary-button" onClick={() => onAction(`Detalle operativo de ${trip.id}`)}>
-            <Route aria-hidden="true" />
-            Ver detalle
+          <button type="button" className="primary-button" onClick={() => onReportIncident(trip)}>
+            <TriangleAlert aria-hidden="true" />
+            Reportar incidente
           </button>
         </div>
       </div>

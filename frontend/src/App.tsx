@@ -7,7 +7,12 @@ import { TripFilters } from "./components/TripFilters";
 import { TripList } from "./components/TripList";
 import { TripDetails } from "./components/TripDetails";
 import { AlertsPanel } from "./components/AlertsPanel";
-import { getActiveTrips } from "./services/tripService";
+import {
+  createIncidentForTrip,
+  getActiveTrips,
+  resolveAlert,
+  sendTelemetryForTrip,
+} from "./services/tripService";
 import type { Trip, TripStatusFilter } from "./types/fleet";
 
 function App() {
@@ -20,29 +25,27 @@ function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let isMounted = true;
-
-    getActiveTrips()
-      .then((activeTrips) => {
-        if (!isMounted) {
-          return;
+  const loadTrips = async (preserveSelection = true) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const activeTrips = await getActiveTrips();
+      setTrips(activeTrips);
+      setSelectedTripId((current) => {
+        if (preserveSelection && current && activeTrips.some((trip) => trip.id === current)) {
+          return current;
         }
-        setTrips(activeTrips);
-        setSelectedTripId(activeTrips[0]?.id ?? null);
-        setIsLoading(false);
-      })
-      .catch(() => {
-        if (!isMounted) {
-          return;
-        }
-        setError("No fue posible cargar los viajes activos.");
-        setIsLoading(false);
+        return activeTrips[0]?.id ?? null;
       });
+    } catch {
+      setError("No fue posible cargar los viajes activos.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    return () => {
-      isMounted = false;
-    };
+  useEffect(() => {
+    void loadTrips(false);
   }, []);
 
   const filteredTrips = useMemo(() => {
@@ -76,6 +79,16 @@ function App() {
   const showToast = (message: string) => {
     setToast(message);
     window.setTimeout(() => setToast(null), 2600);
+  };
+
+  const runAction = async (successMessage: string, action: () => Promise<void>) => {
+    try {
+      await action();
+      await loadTrips();
+      showToast(successMessage);
+    } catch {
+      showToast("No fue posible completar la accion.");
+    }
   };
 
   return (
@@ -117,7 +130,19 @@ function App() {
       }
       mainPanel={
         selectedTrip ? (
-          <TripDetails trip={selectedTrip} onAction={showToast} />
+          <TripDetails
+            trip={selectedTrip}
+            onRefresh={() => {
+              void loadTrips();
+              showToast("Datos actualizados.");
+            }}
+            onSendTelemetry={(trip) =>
+              void runAction("Telemetria enviada.", () => sendTelemetryForTrip(trip))
+            }
+            onReportIncident={(trip) =>
+              void runAction("Incidente reportado.", () => createIncidentForTrip(trip))
+            }
+          />
         ) : (
           <section className="panel empty-state">
             <Search aria-hidden="true" />
@@ -129,8 +154,8 @@ function App() {
       rightPanel={
         <AlertsPanel
           trip={selectedTrip}
-          onResolveAlert={(alertTitle) =>
-            showToast(`Alerta revisada: ${alertTitle}`)
+          onResolveAlert={(alert) =>
+            void runAction(`Alerta resuelta: ${alert.title}`, () => resolveAlert(alert.id))
           }
         />
       }
