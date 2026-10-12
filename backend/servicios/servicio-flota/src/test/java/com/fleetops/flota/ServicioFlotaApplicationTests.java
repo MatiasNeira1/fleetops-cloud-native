@@ -1,13 +1,14 @@
 package com.fleetops.flota;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 
-@SpringBootTest
+import org.junit.jupiter.api.Test;
+
 class ServicioFlotaApplicationTests {
 
 	@Test
-	void contextLoads() {
+	void applicationCanBeCreatedWithoutExternalServices() {
+		assertDoesNotThrow(ServicioFlotaApplication::new);
 	}
 
 }

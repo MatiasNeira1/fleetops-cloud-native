@@ -1,4 +1,4 @@
-.PHONY: help local-up local-down local-restart local-logs local-ps local-clean env-check git-status
+.PHONY: help local-up local-down local-restart local-logs local-ps local-clean rabbitmq-check rabbitmq-dlq-demo env-check git-status
 
 COMPOSE_FILE := platform/local/docker-compose.yml
 ENV_FILE_OPTION := $(if $(wildcard .env),--env-file .env,)
@@ -13,6 +13,8 @@ help:
 	@echo "  make local-logs     Muestra logs de Docker Compose"
 	@echo "  make local-ps       Lista contenedores locales"
 	@echo "  make local-clean    Detiene el entorno y elimina volumenes locales"
+	@echo "  make rabbitmq-check Verifica cluster RabbitMQ y topologia"
+	@echo "  make rabbitmq-dlq-demo Ejecuta demo de mensajes a las tres DLQ"
 	@echo "  make env-check      Verifica archivos de entorno esperados"
 	@echo "  make git-status     Muestra el estado Git"
 
@@ -32,6 +34,12 @@ local-ps:
 
 local-clean:
 	$(DOCKER_COMPOSE) down -v --remove-orphans
+
+rabbitmq-check:
+	./scripts/unix/rabbitmq-cluster-check.sh
+
+rabbitmq-dlq-demo:
+	./scripts/unix/rabbitmq-dlq-demo.sh
 
 env-check:
 	@test -f .env.example || (echo "ERROR: falta .env.example" && exit 1)

@@ -1,5 +1,6 @@
 package com.fleetops.flota.messaging.producer;
 
+import com.fleetops.flota.messaging.config.FleetOpsMessageHeaders;
 import com.fleetops.flota.messaging.config.RabbitTopologyProperties;
 import com.fleetops.flota.messaging.model.LogLevel;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -20,18 +21,57 @@ public class LogPublisher {
     }
 
     public void publish(LogLevel level, String message) {
-        rabbitTemplate.convertAndSend(
+        publish(level, message, false);
+    }
+
+    public void publish(
+        LogLevel level,
+        String message,
+        boolean simulateFailure
+    ) {
+        send(
             properties.exchanges().direct(),
             resolveDirectRoutingKey(level),
-            message
+            message,
+            simulateFailure
         );
     }
 
     public void publishTopic(String routingKey, String message) {
-        rabbitTemplate.convertAndSend(
+        publishTopic(routingKey, message, false);
+    }
+
+    public void publishTopic(
+        String routingKey,
+        String message,
+        boolean simulateFailure
+    ) {
+        send(
             properties.exchanges().topic(),
             routingKey,
-            message
+            message,
+            simulateFailure
+        );
+    }
+
+    private void send(
+        String exchange,
+        String routingKey,
+        String message,
+        boolean simulateFailure
+    ) {
+        rabbitTemplate.convertAndSend(
+            exchange,
+            routingKey,
+            message,
+            amqpMessage -> {
+                amqpMessage.getMessageProperties().setHeader(
+                    FleetOpsMessageHeaders.SIMULATE_FAILURE,
+                    simulateFailure
+                );
+
+                return amqpMessage;
+            }
         );
     }
 

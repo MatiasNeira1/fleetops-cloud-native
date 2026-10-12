@@ -24,14 +24,16 @@ public record RabbitTopologyProperties(
     public record Queues(
         @NotBlank String all,
         @NotBlank String errors,
-        @NotBlank String security
+        @NotBlank String security,
+        @NotBlank String telemetry
     ) {
     }
 
     public record Dlqs(
         @NotBlank String all,
         @NotBlank String errors,
-        @NotBlank String security
+        @NotBlank String security,
+        @NotBlank String telemetry
     ) {
     }
 
@@ -53,14 +55,16 @@ public record RabbitTopologyProperties(
     public record Topic(
         @NotBlank String all,
         @NotBlank String errors,
-        @NotBlank String security
+        @NotBlank String security,
+        @NotBlank String telemetry
     ) {
     }
 
     public record Dead(
         @NotBlank String all,
         @NotBlank String errors,
-        @NotBlank String security
+        @NotBlank String security,
+        @NotBlank String telemetry
     ) {
     }
 }

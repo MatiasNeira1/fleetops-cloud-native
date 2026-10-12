@@ -6,6 +6,8 @@ import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
+import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
+import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +21,11 @@ public class RabbitMQConfig {
 
     public RabbitMQConfig(RabbitTopologyProperties properties) {
         this.properties = properties;
+    }
+
+    @Bean
+    MessageConverter jsonMessageConverter() {
+        return new JacksonJsonMessageConverter();
     }
 
     // Exchanges
@@ -79,6 +86,15 @@ public class RabbitMQConfig {
             .build();
     }
 
+    @Bean
+    Queue telemetryQueue() {
+        return QueueBuilder
+            .durable(properties.queues().telemetry())
+            .deadLetterExchange(properties.exchanges().dlx())
+            .deadLetterRoutingKey(properties.routing().dead().telemetry())
+            .build();
+    }
+
     // Dead Letter Queues
 
     @Bean
@@ -99,6 +115,13 @@ public class RabbitMQConfig {
     Queue securityLogsDlq() {
         return QueueBuilder
             .durable(properties.dlqs().security())
+            .build();
+    }
+
+    @Bean
+    Queue telemetryDlq() {
+        return QueueBuilder
+            .durable(properties.dlqs().telemetry())
             .build();
     }
 
@@ -186,6 +209,16 @@ public class RabbitMQConfig {
             .with(properties.routing().topic().security());
     }
 
+    @Bean
+    Binding bindTelemetryTopicEvents(
+        @Qualifier("eventsTopicExchange") TopicExchange exchange,
+        @Qualifier("telemetryQueue") Queue queue
+    ) {
+        return BindingBuilder.bind(queue)
+            .to(exchange)
+            .with(properties.routing().topic().telemetry());
+    }
+
     // Bindings de las DLQ
 
     @Bean
@@ -216,5 +249,15 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(queue)
             .to(exchange)
             .with(properties.routing().dead().security());
+    }
+
+    @Bean
+    Binding bindTelemetryDlq(
+        @Qualifier("deadLetterExchange") DirectExchange exchange,
+        @Qualifier("telemetryDlq") Queue queue
+    ) {
+        return BindingBuilder.bind(queue)
+            .to(exchange)
+            .with(properties.routing().dead().telemetry());
     }
 }
