@@ -41,6 +41,7 @@ export interface Trip {
   origin: Place;
   destination: Place;
   driver: string;
+  vehicleId: string;
   vehicle: string;
   status: TripStatus;
   departureTime: string;

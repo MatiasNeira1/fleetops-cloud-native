@@ -4,7 +4,7 @@ import { AlertCard } from "./AlertCard";
 
 interface AlertsPanelProps {
   trip: Trip | null;
-  onResolveAlert: (alertTitle: string) => void;
+  onResolveAlert: (alert: Trip["alerts"][number]) => void;
 }
 
 export function AlertsPanel({ trip, onResolveAlert }: AlertsPanelProps) {
@@ -30,7 +30,7 @@ export function AlertsPanel({ trip, onResolveAlert }: AlertsPanelProps) {
       <div className="alerts-list">
         {alerts.length > 0 ? (
           alerts.map((alert) => (
-            <AlertCard key={alert.id} alert={alert} onResolve={() => onResolveAlert(alert.title)} />
+            <AlertCard key={alert.id} alert={alert} onResolve={() => onResolveAlert(alert)} />
           ))
         ) : (
           <div className="empty-alerts">
