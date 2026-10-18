@@ -31,7 +31,7 @@ docker build -t fleetops/servicio-flota:local backend/servicios/servicio-flota
 Tambien puedes construirlo mediante Compose:
 
 ```bash
-docker compose --env-file .env -f platform/local/docker-compose.yml build servicio-flota
+docker compose --env-file .env.production.local -f platform/local/docker-compose.yml build servicio-flota
 ```
 
 ## Variables necesarias
@@ -78,7 +78,7 @@ No uses `localhost` desde un contenedor para conectarte a PostgreSQL o RabbitMQ;
 Desde la raiz del repositorio:
 
 ```bash
-docker compose --env-file .env -f platform/local/docker-compose.yml up -d postgres rabbitmq-1 rabbitmq-2 servicio-flota
+docker compose --env-file .env.production.local -f platform/local/docker-compose.yml up -d postgres rabbitmq-1 rabbitmq-2 servicio-flota
 ```
 
 El compose conserva PostgreSQL y el cluster RabbitMQ de dos nodos. `servicio-flota` espera a que esos servicios esten saludables cuando Docker Compose puede evaluarlo.
@@ -100,7 +100,7 @@ curl http://localhost:8080/api/v1/trips
 Logs:
 
 ```bash
-docker compose --env-file .env -f platform/local/docker-compose.yml logs servicio-flota
+docker compose --env-file .env.production.local -f platform/local/docker-compose.yml logs servicio-flota
 ```
 
 El endpoint Actuator expuesto por web es `health`. No se exponen endpoints Actuator con informacion sensible.

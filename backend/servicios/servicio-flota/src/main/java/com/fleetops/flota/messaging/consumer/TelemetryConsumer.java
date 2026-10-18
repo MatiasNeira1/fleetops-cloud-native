@@ -24,7 +24,7 @@ public class TelemetryConsumer {
     ) throws Exception {
         long deliveryTag = message.getMessageProperties().getDeliveryTag();
         try {
-            telemetryService.process(event.payload());
+            telemetryService.process(event.payload(), event.correlationId());
             channel.basicAck(deliveryTag, false);
         } catch (RuntimeException exception) {
             channel.basicNack(deliveryTag, false, false);

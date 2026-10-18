@@ -65,6 +65,7 @@ FleetOps define inicialmente tres ambientes:
 Más detalle en [docs/environments.md](docs/environments.md).
 
 La configuración local de RabbitMQ en clúster de dos nodos está documentada en [docs/rabbitmq-local.md](docs/rabbitmq-local.md).
+El procesamiento asíncrono de alertas con `ms-alerta` está documentado en [docs/ms-alerta-rabbitmq.md](docs/ms-alerta-rabbitmq.md).
 La imagen Docker del backend `servicio-flota` está documentada en [docs/backend-docker.md](docs/backend-docker.md).
 
 ## Desarrollo local
@@ -72,7 +73,7 @@ La imagen Docker del backend `servicio-flota` está documentada en [docs/backend
 1. Copia el archivo de ejemplo:
 
    ```bash
-   cp .env.example .env
+   cp .env.production.local.example .env.production.local
    ```
 
 2. Ajusta los valores locales si corresponde.

@@ -1,3 +1,5 @@
+import { getAccessToken } from "../auth/accessToken";
+
 export const API_BASE_URL_ENV = "VITE_API_BASE_URL";
 
 interface ApiBaseUrlValidationOptions {
@@ -56,10 +58,10 @@ export function buildApiUrl(path: string, baseUrl = apiBaseUrl): string {
 }
 
 export async function requestJson<T>(path: string): Promise<T> {
-  const response = await fetch(buildApiUrl(path));
-  if (!response.ok) {
-    throw new Error(`FleetOps API error ${response.status} for ${path}`);
-  }
+  const response = await fetch(buildApiUrl(path), {
+    headers: { Authorization: `Bearer ${await getAccessToken()}` },
+  });
+  checkResponse(response, path);
   return response.json() as Promise<T>;
 }
 
@@ -70,13 +72,17 @@ export async function sendJson<T>(
 ): Promise<T> {
   const response = await fetch(buildApiUrl(path), {
     method,
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${await getAccessToken()}` },
     body: JSON.stringify(body),
   });
-  if (!response.ok) {
-    throw new Error(`FleetOps API error ${response.status} for ${path}`);
-  }
+  checkResponse(response, path);
   return response.json() as Promise<T>;
+}
+
+function checkResponse(response: Response, path: string): void {
+  if (response.status === 401) throw new Error("Sesión inválida o expirada. Inicia sesión nuevamente.");
+  if (response.status === 403) throw new Error("Acceso insuficiente para esta operación.");
+  if (!response.ok) throw new Error(`FleetOps API error ${response.status} for ${path}`);
 }
 
 const apiBaseUrl = validateApiBaseUrl(import.meta.env.VITE_API_BASE_URL, {

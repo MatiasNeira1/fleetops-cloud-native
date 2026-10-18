@@ -17,7 +17,7 @@ import com.fleetops.flota.infrastructure.persistence.VehiclePositionRepository;
 import com.fleetops.flota.infrastructure.persistence.VehicleRepository;
 import com.fleetops.flota.messaging.dto.TelemetryEventPayload;
 import com.fleetops.flota.messaging.dto.TelemetryReceivedEvent;
-import com.fleetops.flota.messaging.dto.EventEnvelope;
+import com.fleetops.flota.messaging.dto.AlertCreatedEvent;
 import com.fleetops.flota.messaging.producer.DomainEventPublisher;
 import java.time.Instant;
 import java.util.UUID;
@@ -28,7 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 public class TelemetryService {
 
     public static final String TELEMETRY_ROUTING_KEY = "fleetops.telemetry.received";
-    public static final String ALERT_ROUTING_KEY = "fleetops.alert.created";
+    public static final String SPEED_ALERT_ROUTING_KEY = "fleetops.alert.speed.created";
+    public static final String FUEL_ALERT_ROUTING_KEY = "fleetops.alert.fuel.created";
 
     private final VehicleRepository vehicleRepository;
     private final TripRepository tripRepository;
@@ -69,7 +70,7 @@ public class TelemetryService {
             "telemetry.received",
             1,
             request.vehicleId(),
-            UUID.randomUUID().toString(),
+            request.eventId(),
             Instant.now(),
             payload
         );
@@ -79,6 +80,11 @@ public class TelemetryService {
 
     @Transactional
     public void process(TelemetryEventPayload payload) {
+        process(payload, payload.eventId());
+    }
+
+    @Transactional
+    public void process(TelemetryEventPayload payload, String correlationId) {
         if (telemetryEventRepository.existsById(payload.eventId())) {
             return;
         }
@@ -103,10 +109,10 @@ public class TelemetryService {
             payload.tripId(),
             Instant.now()
         ));
-        createTelemetryAlerts(payload);
+        createTelemetryAlerts(payload, correlationId);
     }
 
-    private void createTelemetryAlerts(TelemetryEventPayload payload) {
+    private void createTelemetryAlerts(TelemetryEventPayload payload, String correlationId) {
         if (payload.tripId() == null) {
             return;
         }
@@ -120,7 +126,7 @@ public class TelemetryService {
                 "Velocidad reportada sobre el limite configurado",
                 AlertStatus.OPEN,
                 Instant.now()
-            )));
+            )), payload.speedKph(), properties.maxSpeedKph(), correlationId);
         }
         if (payload.fuelPercent().compareTo(properties.minFuelPercent()) < 0) {
             publishAlert(alertRepository.save(new Alert(
@@ -132,19 +138,31 @@ public class TelemetryService {
                 "Porcentaje de combustible bajo el minimo configurado",
                 AlertStatus.OPEN,
                 Instant.now()
-            )));
+            )), payload.fuelPercent(), properties.minFuelPercent(), correlationId);
         }
     }
 
-    private void publishAlert(Alert alert) {
-        publisher.publish(ALERT_ROUTING_KEY, new EventEnvelope<>(
-            UUID.randomUUID().toString(),
+    private void publishAlert(Alert alert, java.math.BigDecimal measuredValue,
+                              java.math.BigDecimal thresholdValue, String correlationId) {
+        String routingKey = alert.getType() == AlertType.SPEEDING
+            ? SPEED_ALERT_ROUTING_KEY : FUEL_ALERT_ROUTING_KEY;
+        publisher.publishAlertAfterCommit(routingKey, new AlertCreatedEvent(
+            UUID.randomUUID(),
             "alert.created",
             1,
-            String.valueOf(alert.getId()),
-            UUID.randomUUID().toString(),
-            Instant.now(),
-            alert
+            alert.getDetectedAt(),
+            "servicio-flota",
+            correlationId,
+            alert.getId(),
+            alert.getTripId(),
+            alert.getVehicleId(),
+            alert.getType() == AlertType.SPEEDING ? "SPEED_LIMIT_EXCEEDED" : "LOW_FUEL",
+            alert.getSeverity().name(),
+            alert.getTitle(),
+            alert.getDescription(),
+            measuredValue,
+            thresholdValue,
+            java.util.Map.of()
         ));
     }
 

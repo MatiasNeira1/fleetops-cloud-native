@@ -3,6 +3,28 @@ import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
+const authMock = vi.hoisted(() => ({
+  accounts: [{ username: "operador@example.com", name: "Operador FleetOps" }],
+  loginRedirect: vi.fn().mockResolvedValue(undefined),
+  logoutRedirect: vi.fn().mockResolvedValue(undefined),
+  acquireTokenRedirect: vi.fn().mockResolvedValue(undefined),
+}));
+
+vi.mock("@azure/msal-react", () => ({
+  useMsal: () => ({
+    accounts: authMock.accounts,
+    inProgress: "none",
+    instance: {
+      getActiveAccount: () => authMock.accounts[0],
+      loginRedirect: authMock.loginRedirect,
+      logoutRedirect: authMock.logoutRedirect,
+      acquireTokenRedirect: authMock.acquireTokenRedirect,
+    },
+  }),
+}));
+vi.mock("./auth/config", () => ({ authSettings: { loginRequest: { scopes: ["api://test/access"] } } }));
+vi.mock("./auth/accessToken", () => ({ getAccessToken: vi.fn().mockResolvedValue("test-access-token") }));
+
 const apiTrips = [
   {
     id: "trip-001",
@@ -146,11 +168,15 @@ async function renderDashboard() {
 
 describe("FleetOps dispatch dashboard", () => {
   beforeEach(() => {
+    authMock.accounts = [{ username: "operador@example.com", name: "Operador FleetOps" }];
+    authMock.loginRedirect.mockClear();
+    authMock.logoutRedirect.mockClear();
     vi.stubGlobal(
       "fetch",
       vi.fn((input: RequestInfo | URL) => {
         const url = String(input);
-        const path = url.replace(/^https?:\/\/[^/]+/, "");
+        const fullPath = url.replace(/^https?:\/\/[^/]+/, "");
+        const path = fullPath.slice(fullPath.indexOf("/api/v1/"));
 
         if (path === "/api/v1/trips") {
           return Promise.resolve(Response.json(apiTrips));
@@ -176,6 +202,28 @@ describe("FleetOps dispatch dashboard", () => {
 
     expect(screen.getAllByText("FleetOps").length).toBeGreaterThan(0);
     expect(screen.getByRole("main", { name: "Panel de despacho" })).toBeInTheDocument();
+    expect(screen.getByText("Operador FleetOps")).toBeInTheDocument();
+  });
+
+  it("muestra login sin llamar a la API cuando no hay sesión", () => {
+    authMock.accounts = [];
+    render(<App />);
+    expect(screen.getByRole("button", { name: "Iniciar sesión con Microsoft" })).toBeInTheDocument();
+    expect(screen.queryByRole("main", { name: "Panel de despacho" })).not.toBeInTheDocument();
+    expect(fetch).not.toHaveBeenCalled();
+  });
+
+  it("inicia sesión con el scope de API", async () => {
+    authMock.accounts = [];
+    render(<App />);
+    await userEvent.click(screen.getByRole("button", { name: "Iniciar sesión con Microsoft" }));
+    expect(authMock.loginRedirect).toHaveBeenCalledWith({ scopes: ["api://test/access"] });
+  });
+
+  it("cierra sesión con MSAL", async () => {
+    await renderDashboard();
+    await userEvent.click(screen.getByRole("button", { name: "Cerrar sesión" }));
+    expect(authMock.logoutRedirect).toHaveBeenCalled();
   });
 
   it("muestra la lista de viajes", async () => {

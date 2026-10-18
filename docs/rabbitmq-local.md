@@ -25,7 +25,7 @@ Los nodos comparten `RABBITMQ_ERLANG_COOKIE`, tienen `RABBITMQ_NODENAME` distint
 Copia `.env.example` a `.env` y define valores locales:
 
 ```bash
-cp .env.example .env
+cp .env.production.local.example .env.production.local
 ```
 
 RabbitMQ requiere estas variables:
@@ -102,26 +102,26 @@ Bindings principales:
 Validar Compose:
 
 ```bash
-docker compose --env-file .env -f platform/local/docker-compose.yml config
+docker compose --env-file .env.production.local -f platform/local/docker-compose.yml config
 ```
 
 Levantar RabbitMQ sin eliminar volumenes existentes:
 
 ```bash
-docker compose --env-file .env -f platform/local/docker-compose.yml up -d rabbitmq-1 rabbitmq-2
+docker compose --env-file .env.production.local -f platform/local/docker-compose.yml up -d rabbitmq-1 rabbitmq-2
 ```
 
 Ver contenedores:
 
 ```bash
-docker compose --env-file .env -f platform/local/docker-compose.yml ps
+docker compose --env-file .env.production.local -f platform/local/docker-compose.yml ps
 ```
 
 Comprobar el cluster desde ambos nodos:
 
 ```bash
-docker compose --env-file .env -f platform/local/docker-compose.yml exec -T rabbitmq-1 rabbitmqctl cluster_status
-docker compose --env-file .env -f platform/local/docker-compose.yml exec -T rabbitmq-2 rabbitmqctl cluster_status
+docker compose --env-file .env.production.local -f platform/local/docker-compose.yml exec -T rabbitmq-1 rabbitmqctl cluster_status
+docker compose --env-file .env.production.local -f platform/local/docker-compose.yml exec -T rabbitmq-2 rabbitmqctl cluster_status
 ```
 
 Ejecutar verificacion automatica en Windows:
@@ -163,7 +163,7 @@ Ejecutar el backend local desde Bash:
 Limpiar completamente el entorno:
 
 ```bash
-docker compose --env-file .env -f platform/local/docker-compose.yml down -v --remove-orphans
+docker compose --env-file .env.production.local -f platform/local/docker-compose.yml down -v --remove-orphans
 ```
 
 ## Interfaces web

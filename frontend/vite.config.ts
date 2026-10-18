@@ -30,12 +30,22 @@ function validateProductionApiBaseUrl(value: string | undefined): void {
   }
 }
 
-export default defineConfig(({ command, mode }) => {
-  const env = loadEnv(mode, process.cwd(), "VITE_");
-  const backendUrl = env.VITE_API_BASE_URL || "http://localhost:8080";
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), "");
+  const backendUrl = env.VITE_API_BASE_URL;
 
-  if (command === "build" && mode === "production") {
+  if (mode === "production") {
     validateProductionApiBaseUrl(env.VITE_API_BASE_URL);
+    for (const name of ["VITE_ENTRA_TENANT_ID", "VITE_ENTRA_CLIENT_ID", "VITE_ENTRA_API_CLIENT_ID", "VITE_ENTRA_REDIRECT_URI", "VITE_ENTRA_POST_LOGOUT_REDIRECT_URI", "VITE_API_SCOPE"]) {
+      if (!env[name]?.trim()) throw new Error(`${name} es obligatoria para builds de produccion.`);
+    }
+    for (const name of ["VITE_ENTRA_REDIRECT_URI", "VITE_ENTRA_POST_LOGOUT_REDIRECT_URI"]) {
+      let uri: URL;
+      try { uri = new URL(env[name]); } catch { throw new Error(`${name} debe ser una URL absoluta valida.`); }
+      if (uri.protocol !== "https:" || ["localhost", "127.0.0.1", "::1"].includes(uri.hostname)) {
+        throw new Error(`${name} debe usar HTTPS y no apuntar a localhost en produccion.`);
+      }
+    }
   }
 
   return {

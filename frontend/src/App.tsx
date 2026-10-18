@@ -1,5 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, Search, X } from "lucide-react";
+import { InteractionStatus } from "@azure/msal-browser";
+import { useMsal } from "@azure/msal-react";
+import { authSettings } from "./auth/config";
+import { LoginScreen } from "./auth/LoginScreen";
 import { FleetOpsLayout } from "./components/FleetOpsLayout";
 import { TopBar } from "./components/TopBar";
 import { Sidebar } from "./components/Sidebar";
@@ -16,6 +20,21 @@ import {
 import type { Trip, TripStatusFilter } from "./types/fleet";
 
 function App() {
+  const { instance, accounts, inProgress } = useMsal();
+  if (inProgress !== InteractionStatus.None) {
+    return <main className="login-page"><p role="status">Comprobando sesión…</p></main>;
+  }
+  const account = instance.getActiveAccount() ?? accounts[0];
+  return account ? <Dashboard username={account.name ?? account.username} onLogout={() => instance.logoutRedirect({ account })} onRenew={() => instance.acquireTokenRedirect({ ...authSettings.loginRequest, account })} /> : <LoginScreen />;
+}
+
+interface DashboardProps {
+  username: string;
+  onLogout: () => Promise<void>;
+  onRenew: () => Promise<void>;
+}
+
+function Dashboard({ username, onLogout, onRenew }: DashboardProps) {
   const [trips, setTrips] = useState<Trip[]>([]);
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<TripStatusFilter>("Todos");
@@ -37,8 +56,8 @@ function App() {
         }
         return activeTrips[0]?.id ?? null;
       });
-    } catch {
-      setError("No fue posible cargar los viajes activos.");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "No fue posible cargar los viajes activos.");
     } finally {
       setIsLoading(false);
     }
@@ -55,11 +74,11 @@ function App() {
         }
         setTrips(activeTrips);
         setSelectedTripId(activeTrips[0]?.id ?? null);
-      } catch {
+      } catch (caught) {
         if (!isMounted) {
           return;
         }
-        setError("No fue posible cargar los viajes activos.");
+        setError(caught instanceof Error ? caught.message : "No fue posible cargar los viajes activos.");
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -112,8 +131,8 @@ function App() {
       await action();
       await loadTrips();
       showToast(successMessage);
-    } catch {
-      showToast("No fue posible completar la accion.");
+    } catch (caught) {
+      showToast(caught instanceof Error ? caught.message : "No fue posible completar la accion.");
     }
   };
 
@@ -127,6 +146,8 @@ function App() {
       }
       topbar={
         <TopBar
+          username={username}
+          onLogout={() => void onLogout()}
           query={query}
           onQueryChange={setQuery}
           onMenuClick={() => setIsSidebarOpen((current) => !current)}
@@ -152,6 +173,7 @@ function App() {
             error={error}
             onSelectTrip={setSelectedTripId}
           />
+          {error?.includes("Renovar sesión") && <button className="secondary-button" type="button" onClick={() => void onRenew()}>Renovar sesión</button>}
         </section>
       }
       mainPanel={
