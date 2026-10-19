@@ -25,7 +25,7 @@ class TelemetryConsumerTests {
 
         consumer.consume(event(), message, channel);
 
-        verify(service).process(event().payload());
+        verify(service).process(event().payload(), event().correlationId());
         verify(channel).basicAck(19L, false);
     }
 
@@ -33,7 +33,7 @@ class TelemetryConsumerTests {
     void rejectsFailedMessageWithoutRequeue() throws Exception {
         TelemetryService service = mock(TelemetryService.class);
         doThrow(new IllegalStateException("invalid telemetry"))
-            .when(service).process(event().payload());
+            .when(service).process(event().payload(), event().correlationId());
         TelemetryConsumer consumer = new TelemetryConsumer(service);
         Channel channel = mock(Channel.class);
 

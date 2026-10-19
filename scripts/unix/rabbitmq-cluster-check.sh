@@ -16,8 +16,8 @@ set -a
 . "$ENV_FILE"
 set +a
 
-: "${RABBITMQ_DEFAULT_USER:?Falta RABBITMQ_DEFAULT_USER en .env}"
-: "${RABBITMQ_DEFAULT_PASS:?Falta RABBITMQ_DEFAULT_PASS en .env}"
+: "${RABBITMQ_DEFAULT_USER:?Falta RABBITMQ_DEFAULT_USER en .env.production.local}"
+: "${RABBITMQ_DEFAULT_PASS:?Falta RABBITMQ_DEFAULT_PASS en .env.production.local}"
 
 compose() {
   docker compose --env-file "$ENV_FILE" -f "$COMPOSE_FILE" "$@"

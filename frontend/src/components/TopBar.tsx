@@ -1,12 +1,14 @@
-import { Bell, ChevronDown, Menu, Search } from "lucide-react";
+import { Bell, LogOut, Menu, Search } from "lucide-react";
 
 interface TopBarProps {
   query: string;
   onQueryChange: (query: string) => void;
   onMenuClick: () => void;
+  username: string;
+  onLogout: () => void;
 }
 
-export function TopBar({ query, onQueryChange, onMenuClick }: TopBarProps) {
+export function TopBar({ query, onQueryChange, onMenuClick, username, onLogout }: TopBarProps) {
   return (
     <header className="topbar">
       <button
@@ -36,14 +38,14 @@ export function TopBar({ query, onQueryChange, onMenuClick }: TopBarProps) {
           <Bell aria-hidden="true" />
           <span aria-hidden="true" className="notification-dot" />
         </button>
-        <button className="user-menu" type="button" aria-label="Abrir menu de usuario">
-          <span className="avatar" aria-hidden="true">MR</span>
+        <div className="user-menu">
+          <span className="avatar" aria-hidden="true">{username.slice(0, 2).toUpperCase()}</span>
           <span className="user-meta">
-            <strong>Maria Ramos</strong>
+            <strong>{username}</strong>
             <small>Operaciones</small>
           </span>
-          <ChevronDown aria-hidden="true" />
-        </button>
+        </div>
+        <button className="icon-button" type="button" aria-label="Cerrar sesión" onClick={onLogout}><LogOut aria-hidden="true" /></button>
       </div>
     </header>
   );

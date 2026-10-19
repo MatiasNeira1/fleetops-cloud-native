@@ -15,8 +15,8 @@ set -a
 . "$ENV_FILE"
 set +a
 
-: "${RABBITMQ_DEFAULT_USER:?Falta RABBITMQ_DEFAULT_USER en .env}"
-: "${RABBITMQ_DEFAULT_PASS:?Falta RABBITMQ_DEFAULT_PASS en .env}"
+: "${RABBITMQ_DEFAULT_USER:?Falta RABBITMQ_DEFAULT_USER en .env.production.local}"
+: "${RABBITMQ_DEFAULT_PASS:?Falta RABBITMQ_DEFAULT_PASS en .env.production.local}"
 
 api() {
   method="$1"

@@ -6,6 +6,7 @@ import type {
   TripAlert,
   TripStatus,
 } from "../types/fleet";
+import { requestJson, sendJson } from "./apiClient";
 
 type ApiTripStatus = "IN_TRANSIT" | "DELAYED" | "INCIDENT" | "SCHEDULED";
 type ApiAlertSeverity = "CRITICAL" | "WARNING" | "INFO" | "INFORMATIONAL";
@@ -64,8 +65,6 @@ interface ApiTripDetail extends ApiTripSummary {
   timeline: ApiTimelineItem[];
 }
 
-const apiBaseUrl = import.meta.env.VITE_API_BASE_URL ?? "";
-
 const statusLabels: Record<ApiTripStatus, TripStatus> = {
   IN_TRANSIT: "En ruta",
   DELAYED: "Con retraso",
@@ -79,14 +78,6 @@ const severityLabels: Record<ApiAlertSeverity, AlertSeverity> = {
   INFO: "Informativo",
   INFORMATIONAL: "Informativo",
 };
-
-async function requestJson<T>(path: string): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`);
-  if (!response.ok) {
-    throw new Error(`FleetOps API error ${response.status} for ${path}`);
-  }
-  return response.json() as Promise<T>;
-}
 
 function toCoordinates(latitude: number | string, longitude: number | string): Coordinates {
   return [Number(latitude), Number(longitude)];
@@ -168,44 +159,32 @@ function toTrip(detail: ApiTripDetail): Trip {
 }
 
 export async function getActiveTrips(): Promise<Trip[]> {
-  const summaries = await requestJson<ApiTripSummary[]>("/api/v1/trips");
+  const summaries = await requestJson<ApiTripSummary[]>("api/v1/trips");
   const details = await Promise.all(
-    summaries.map((trip) => requestJson<ApiTripDetail>(`/api/v1/trips/${trip.id}`))
+    summaries.map((trip) => requestJson<ApiTripDetail>(`api/v1/trips/${trip.id}`))
   );
   return details.map(toTrip);
 }
 
 export async function getTripById(id: string): Promise<Trip | undefined> {
   try {
-    return toTrip(await requestJson<ApiTripDetail>(`/api/v1/trips/${id}`));
+    return toTrip(await requestJson<ApiTripDetail>(`api/v1/trips/${id}`));
   } catch {
     return undefined;
   }
 }
 
 export async function getAlertsByTripId(tripId: string): Promise<TripAlert[]> {
-  const alerts = await requestJson<ApiAlert[]>(`/api/v1/trips/${tripId}/alerts`);
+  const alerts = await requestJson<ApiAlert[]>(`api/v1/trips/${tripId}/alerts`);
   return alerts.filter((alert) => alert.status === "OPEN").map(toTripAlert);
 }
 
-async function sendJson<T>(path: string, method: "POST" | "PATCH", body: unknown): Promise<T> {
-  const response = await fetch(`${apiBaseUrl}${path}`, {
-    method,
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!response.ok) {
-    throw new Error(`FleetOps API error ${response.status} for ${path}`);
-  }
-  return response.json() as Promise<T>;
-}
-
 export async function resolveAlert(alertId: string): Promise<void> {
-  await sendJson(`/api/v1/alerts/${alertId}/status`, "PATCH", { status: "RESOLVED" });
+  await sendJson(`api/v1/alerts/${alertId}/status`, "PATCH", { status: "RESOLVED" });
 }
 
 export async function createIncidentForTrip(trip: Trip): Promise<void> {
-  await sendJson("/api/v1/incidents", "POST", {
+  await sendJson("api/v1/incidents", "POST", {
     tripId: trip.id,
     vehicleId: trip.vehicleId,
     type: "GENERAL",
@@ -218,7 +197,7 @@ export async function createIncidentForTrip(trip: Trip): Promise<void> {
 }
 
 export async function sendTelemetryForTrip(trip: Trip): Promise<void> {
-  await sendJson("/api/v1/telemetry", "POST", {
+  await sendJson("api/v1/telemetry", "POST", {
     eventId: crypto.randomUUID(),
     vehicleId: trip.vehicleId,
     tripId: trip.id,

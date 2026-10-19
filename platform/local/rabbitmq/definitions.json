@@ -75,6 +75,16 @@
       }
     },
     {
+      "name": "fleetops.alerts.queue",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {
+        "x-dead-letter-exchange": "fleetops.dlx.direct",
+        "x-dead-letter-routing-key": "fleetops.alerts.dlq"
+      }
+    },
+    {
       "name": "fleetops.logs.all.dlq",
       "vhost": "/",
       "durable": true,
@@ -97,6 +107,13 @@
     },
     {
       "name": "fleetops.telemetry.dlq",
+      "vhost": "/",
+      "durable": true,
+      "auto_delete": false,
+      "arguments": {}
+    },
+    {
+      "name": "fleetops.alerts.dlq",
       "vhost": "/",
       "durable": true,
       "auto_delete": false,
@@ -177,6 +194,14 @@
       "arguments": {}
     },
     {
+      "source": "fleetops.events.topic",
+      "vhost": "/",
+      "destination": "fleetops.alerts.queue",
+      "destination_type": "queue",
+      "routing_key": "fleetops.alert.#",
+      "arguments": {}
+    },
+    {
       "source": "fleetops.dlx.direct",
       "vhost": "/",
       "destination": "fleetops.logs.all.dlq",
@@ -206,6 +231,14 @@
       "destination": "fleetops.telemetry.dlq",
       "destination_type": "queue",
       "routing_key": "fleetops.telemetry.dead",
+      "arguments": {}
+    },
+    {
+      "source": "fleetops.dlx.direct",
+      "vhost": "/",
+      "destination": "fleetops.alerts.dlq",
+      "destination_type": "queue",
+      "routing_key": "fleetops.alerts.dlq",
       "arguments": {}
     }
   ]

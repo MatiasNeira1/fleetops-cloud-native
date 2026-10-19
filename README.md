@@ -65,13 +65,15 @@ FleetOps define inicialmente tres ambientes:
 Más detalle en [docs/environments.md](docs/environments.md).
 
 La configuración local de RabbitMQ en clúster de dos nodos está documentada en [docs/rabbitmq-local.md](docs/rabbitmq-local.md).
+El procesamiento asíncrono de alertas con `ms-alerta` está documentado en [docs/ms-alerta-rabbitmq.md](docs/ms-alerta-rabbitmq.md).
+La imagen Docker del backend `servicio-flota` está documentada en [docs/backend-docker.md](docs/backend-docker.md).
 
 ## Desarrollo local
 
 1. Copia el archivo de ejemplo:
 
    ```bash
-   cp .env.example .env
+   cp .env.production.local.example .env.production.local
    ```
 
 2. Ajusta los valores locales si corresponde.
@@ -102,7 +104,23 @@ La configuración local de RabbitMQ en clúster de dos nodos está documentada e
    make local-ps
    ```
 
-5. Detén el entorno:
+5. Ejecuta backend y frontend localmente:
+
+   ```powershell
+   ./scripts/windows/local-backend-run.ps1
+   ```
+
+   En otra terminal:
+
+   ```powershell
+   cd frontend
+   Copy-Item .env.example .env.local
+   npm run dev
+   ```
+
+   `frontend/.env.example` define `VITE_API_BASE_URL`. En desarrollo local puede quedar vacío para usar el proxy de Vite hacia `http://localhost:8080`. Si quieres llamar directo al backend, usa `VITE_API_BASE_URL=http://localhost:8080`.
+
+6. Detén el entorno:
 
    ```bash
    make local-down

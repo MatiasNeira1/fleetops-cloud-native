@@ -64,6 +64,13 @@ foreach ($name in @("POSTGRES_HOST", "POSTGRES_PORT", "POSTGRES_DB", "POSTGRES_U
     }
 }
 
+foreach ($name in @("FLEETOPS_DEMO_DATA_ENABLED", "FLEETOPS_TELEMETRY_MAX_SPEED_KPH", "FLEETOPS_TELEMETRY_MIN_FUEL_PERCENT")) {
+    $value = Read-DotEnvValue $EnvFile $name
+    if (-not [string]::IsNullOrWhiteSpace($value)) {
+        Set-Item -Path "Env:$name" -Value $value
+    }
+}
+
 $env:SPRING_RABBITMQ_ADDRESSES = "localhost:5672,localhost:5673"
 $env:SPRING_RABBITMQ_USERNAME = $rabbitUser
 $env:SPRING_RABBITMQ_PASSWORD = $rabbitPass

@@ -5,8 +5,8 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-fleetops}
-      POSTGRES_USER: ${POSTGRES_USER:-fleetops}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change_me}
+      POSTGRES_USER: ${POSTGRES_USER:?Define POSTGRES_USER en .env.production.local para PostgreSQL local}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env.production.local para PostgreSQL local}
     ports:
       - "${POSTGRES_CONTAINER_PORT:-5432}:5432"
     volumes:
@@ -26,9 +26,9 @@ services:
     hostname: rabbitmq-1
     restart: unless-stopped
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:?Define RABBITMQ_DEFAULT_USER en .env para RabbitMQ local}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?Define RABBITMQ_DEFAULT_PASS en .env para RabbitMQ local}
-      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE:?Define RABBITMQ_ERLANG_COOKIE en .env con el mismo valor para ambos nodos}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:?Define RABBITMQ_DEFAULT_USER en .env.production.local para RabbitMQ local}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?Define RABBITMQ_DEFAULT_PASS en .env.production.local para RabbitMQ local}
+      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE:?Define RABBITMQ_ERLANG_COOKIE en .env.production.local con el mismo valor para ambos nodos}
       RABBITMQ_NODENAME: rabbit@rabbitmq-1
     ports:
       - "${RABBITMQ_NODE1_AMQP_PORT:-5672}:5672"
@@ -55,9 +55,9 @@ services:
       rabbitmq-1:
         condition: service_healthy
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:?Define RABBITMQ_DEFAULT_USER en .env para RabbitMQ local}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?Define RABBITMQ_DEFAULT_PASS en .env para RabbitMQ local}
-      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE:?Define RABBITMQ_ERLANG_COOKIE en .env con el mismo valor para ambos nodos}
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:?Define RABBITMQ_DEFAULT_USER en .env.production.local para RabbitMQ local}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:?Define RABBITMQ_DEFAULT_PASS en .env.production.local para RabbitMQ local}
+      RABBITMQ_ERLANG_COOKIE: ${RABBITMQ_ERLANG_COOKIE:?Define RABBITMQ_ERLANG_COOKIE en .env.production.local con el mismo valor para ambos nodos}
       RABBITMQ_NODENAME: rabbit@rabbitmq-2
     ports:
       - "${RABBITMQ_NODE2_AMQP_PORT:-5673}:5672"
@@ -72,6 +72,80 @@ services:
       timeout: 5s
       retries: 12
       start_period: 30s
+    networks:
+      - fleetops-local
+
+  servicio-flota:
+    image: fleetops/servicio-flota:local
+    build:
+      context: ../../backend/servicios/servicio-flota
+      dockerfile: Dockerfile
+    container_name: fleetops-servicio-flota
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq-1:
+        condition: service_healthy
+      rabbitmq-2:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8080
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-fleetops}
+      POSTGRES_USER: ${POSTGRES_USER:?Define POSTGRES_USER en .env.production.local para el backend}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env.production.local para el backend}
+      SPRING_RABBITMQ_ADDRESSES: rabbitmq-1:5672,rabbitmq-2:5672
+      SPRING_RABBITMQ_USERNAME: ${SPRING_RABBITMQ_USERNAME:?Define SPRING_RABBITMQ_USERNAME en .env.production.local para el backend}
+      SPRING_RABBITMQ_PASSWORD: ${SPRING_RABBITMQ_PASSWORD:?Define SPRING_RABBITMQ_PASSWORD en .env.production.local para el backend}
+      FLEETOPS_DEMO_DATA_ENABLED: ${FLEETOPS_DEMO_DATA_ENABLED:-true}
+      FLEETOPS_TELEMETRY_MAX_SPEED_KPH: ${FLEETOPS_TELEMETRY_MAX_SPEED_KPH:-90}
+      FLEETOPS_TELEMETRY_MIN_FUEL_PERCENT: ${FLEETOPS_TELEMETRY_MIN_FUEL_PERCENT:-15}
+      RABBITMQ_ALERTS_EXCHANGE: ${RABBITMQ_ALERTS_EXCHANGE:-fleetops.events.topic}
+    ports:
+      - "8080:8080"
+    networks:
+      - fleetops-local
+
+  ms-alerta:
+    image: fleetops/ms-alerta:local
+    build:
+      context: ../../backend/servicios/ms-alerta
+      dockerfile: Dockerfile
+    container_name: fleetops-ms-alerta
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq-1:
+        condition: service_healthy
+      rabbitmq-2:
+        condition: service_healthy
+    environment:
+      SERVER_PORT: 8081
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-fleetops}
+      POSTGRES_USER: ${POSTGRES_USER:?Define POSTGRES_USER en .env para ms-alerta}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Define POSTGRES_PASSWORD en .env para ms-alerta}
+      SPRING_RABBITMQ_ADDRESSES: rabbitmq-1:5672,rabbitmq-2:5672
+      SPRING_RABBITMQ_USERNAME: ${SPRING_RABBITMQ_USERNAME:?Define SPRING_RABBITMQ_USERNAME en .env para ms-alerta}
+      SPRING_RABBITMQ_PASSWORD: ${SPRING_RABBITMQ_PASSWORD:?Define SPRING_RABBITMQ_PASSWORD en .env para ms-alerta}
+      RABBITMQ_ALERTS_EXCHANGE: ${RABBITMQ_ALERTS_EXCHANGE:-fleetops.events.topic}
+      RABBITMQ_ALERTS_DLX: ${RABBITMQ_ALERTS_DLX:-fleetops.dlx.direct}
+      RABBITMQ_ALERTS_QUEUE: ${RABBITMQ_ALERTS_QUEUE:-fleetops.alerts.queue}
+      RABBITMQ_ALERTS_DLQ: ${RABBITMQ_ALERTS_DLQ:-fleetops.alerts.dlq}
+      RABBITMQ_ALERTS_ROUTING_PATTERN: ${RABBITMQ_ALERTS_ROUTING_PATTERN:-fleetops.alert.#}
+      RABBITMQ_ALERTS_DLQ_ROUTING_KEY: ${RABBITMQ_ALERTS_DLQ_ROUTING_KEY:-fleetops.alerts.dlq}
+    ports:
+      - "127.0.0.1:8081:8081"
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8081/actuator/health/readiness"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
     networks:
       - fleetops-local
 volumes:

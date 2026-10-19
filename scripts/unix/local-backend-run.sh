@@ -57,6 +57,9 @@ fi
 postgres_host=$(read_env_value POSTGRES_HOST)
 postgres_port=$(read_env_value POSTGRES_PORT)
 postgres_db=$(read_env_value POSTGRES_DB)
+demo_data_enabled=$(read_env_value FLEETOPS_DEMO_DATA_ENABLED)
+telemetry_max_speed=$(read_env_value FLEETOPS_TELEMETRY_MAX_SPEED_KPH)
+telemetry_min_fuel=$(read_env_value FLEETOPS_TELEMETRY_MIN_FUEL_PERCENT)
 
 export SPRING_RABBITMQ_ADDRESSES="localhost:5672,localhost:5673"
 export SPRING_RABBITMQ_USERNAME="$rabbit_user"
@@ -67,6 +70,9 @@ export SPRING_PROFILES_ACTIVE="local"
 [ -z "$postgres_db" ] || export POSTGRES_DB="$postgres_db"
 [ -z "$postgres_user" ] || export POSTGRES_USER="$postgres_user"
 [ -z "$postgres_password" ] || export POSTGRES_PASSWORD="$postgres_password"
+[ -z "$demo_data_enabled" ] || export FLEETOPS_DEMO_DATA_ENABLED="$demo_data_enabled"
+[ -z "$telemetry_max_speed" ] || export FLEETOPS_TELEMETRY_MAX_SPEED_KPH="$telemetry_max_speed"
+[ -z "$telemetry_min_fuel" ] || export FLEETOPS_TELEMETRY_MIN_FUEL_PERCENT="$telemetry_min_fuel"
 
 echo "Iniciando servicio-flota con RabbitMQ local publicado en localhost:5672,localhost:5673"
 
