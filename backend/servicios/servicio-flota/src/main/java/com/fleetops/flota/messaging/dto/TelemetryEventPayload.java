@@ -12,6 +12,13 @@ public record TelemetryEventPayload(
     BigDecimal speedKph,
     BigDecimal fuelPercent,
     BigDecimal odometerKm,
-    Instant recordedAt
+    Instant recordedAt,
+    String source
 ) {
+    public TelemetryEventPayload(String eventId, String vehicleId, String tripId,
+                                 BigDecimal latitude, BigDecimal longitude, BigDecimal speedKph,
+                                 BigDecimal fuelPercent, BigDecimal odometerKm, Instant recordedAt) {
+        this(eventId, vehicleId, tripId, latitude, longitude, speedKph, fuelPercent,
+            odometerKm, recordedAt, null);
+    }
 }

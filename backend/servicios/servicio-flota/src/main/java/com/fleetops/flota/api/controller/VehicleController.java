@@ -3,6 +3,8 @@ package com.fleetops.flota.api.controller;
 import com.fleetops.flota.api.response.VehiclePositionResponse;
 import com.fleetops.flota.application.service.VehiclePositionService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -22,6 +24,8 @@ public class VehicleController {
 
     @GetMapping("/{id}/position")
     @Operation(summary = "Obtener la ultima posicion conocida de un vehiculo")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Posición encontrada"),
+        @ApiResponse(responseCode = "404", description = "Vehículo inexistente o sin posición")})
     public VehiclePositionResponse latestPosition(@PathVariable String id) {
         return vehiclePositionService.latestPosition(id);
     }

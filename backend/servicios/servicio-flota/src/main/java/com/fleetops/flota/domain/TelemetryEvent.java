@@ -21,6 +21,8 @@ public class TelemetryEvent {
     @Column(nullable = false)
     private Instant receivedAt;
 
+    private String source;
+
     protected TelemetryEvent() {
     }
 
@@ -31,8 +33,15 @@ public class TelemetryEvent {
         this.receivedAt = receivedAt;
     }
 
+    public TelemetryEvent(String eventId, String vehicleId, String tripId, Instant receivedAt,
+                          String source) {
+        this(eventId, vehicleId, tripId, receivedAt);
+        this.source = source;
+    }
+
     public String getEventId() { return eventId; }
     public String getVehicleId() { return vehicleId; }
     public String getTripId() { return tripId; }
     public Instant getReceivedAt() { return receivedAt; }
+    public String getSource() { return source; }
 }

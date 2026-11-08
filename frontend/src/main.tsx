@@ -21,7 +21,12 @@ async function start() {
   );
 }
 
-void start().catch(() => {
+void start().catch((error: unknown) => {
+  console.error("Error al iniciar FleetOps:", error);
+
   const root = document.getElementById("root");
-  if (root) root.textContent = "No fue posible iniciar FleetOps. Revisa la configuración de autenticación.";
+  if (root) {
+    root.textContent =
+      "No fue posible iniciar FleetOps. Revisa la consola para ver el error.";
+  }
 });

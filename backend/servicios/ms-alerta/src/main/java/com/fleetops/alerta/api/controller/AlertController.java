@@ -7,6 +7,9 @@ import com.fleetops.alerta.domain.model.AlertSeverity;
 import com.fleetops.alerta.domain.model.AlertStatus;
 import com.fleetops.alerta.domain.model.AlertType;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.data.domain.Page;
@@ -32,7 +35,9 @@ public class AlertController {
     }
 
     @GetMapping("/alerts")
-    @Operation(summary = "Listar alertas")
+    @Operation(summary = "Listar alertas", description = "Filtra por viaje, vehículo, tipo, severidad y estado. La respuesta es paginada.")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Página de alertas"),
+        @ApiResponse(responseCode = "400", description = "Filtro o paginación inválidos")})
     public Page<AlertResponse> list(@RequestParam(required = false) String tripId,
                                     @RequestParam(required = false) String vehicleId,
                                     @RequestParam(required = false) AlertType type,
@@ -44,19 +49,27 @@ public class AlertController {
 
     @GetMapping("/alerts/{id}")
     @Operation(summary = "Obtener alerta")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Alerta encontrada"),
+        @ApiResponse(responseCode = "404", description = "Alerta inexistente")})
     public AlertResponse get(@PathVariable Long id) {
         return service.get(id);
     }
 
     @GetMapping("/trips/{tripId}/alerts")
-    @Operation(summary = "Listar alertas de un viaje")
-    public Page<AlertResponse> byTrip(@PathVariable String tripId,
+    @Operation(summary = "Listar alertas de un viaje", description = "Devuelve las alertas del viaje en orden descendente de ocurrencia.")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Página de alertas del viaje"),
+        @ApiResponse(responseCode = "400", description = "Paginación inválida")})
+    public Page<AlertResponse> byTrip(@Parameter(description = "Identificador del viaje") @PathVariable String tripId,
                                       @PageableDefault(size = 20, sort = "occurredAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return service.list(tripId, null, null, null, null, pageable);
     }
 
     @PatchMapping("/alerts/{id}/status")
-    @Operation(summary = "Cambiar estado de alerta")
+    @Operation(summary = "Cambiar estado de alerta", description = "Actualiza el estado de una alerta existente.")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Estado actualizado"),
+        @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+        @ApiResponse(responseCode = "404", description = "Alerta inexistente"),
+        @ApiResponse(responseCode = "409", description = "Transición de estado no permitida")})
     public AlertResponse updateStatus(@PathVariable Long id,
                                       @Valid @RequestBody UpdateAlertStatusRequest request) {
         return service.updateStatus(id, request.status());

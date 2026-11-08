@@ -43,6 +43,8 @@ public class VehiclePosition {
     @Column(nullable = false)
     private Instant receivedAt;
 
+    private String source;
+
     protected VehiclePosition() {
     }
 
@@ -68,6 +70,15 @@ public class VehiclePosition {
         this.receivedAt = receivedAt;
     }
 
+    public VehiclePosition(String vehicleId, String tripId, BigDecimal latitude,
+                           BigDecimal longitude, BigDecimal speedKph, BigDecimal fuelPercent,
+                           BigDecimal odometerKm, Instant recordedAt, Instant receivedAt,
+                           String source) {
+        this(vehicleId, tripId, latitude, longitude, speedKph, fuelPercent,
+            odometerKm, recordedAt, receivedAt);
+        this.source = source;
+    }
+
     public Long getId() { return id; }
     public String getVehicleId() { return vehicleId; }
     public String getTripId() { return tripId; }
@@ -78,4 +89,5 @@ public class VehiclePosition {
     public BigDecimal getOdometerKm() { return odometerKm; }
     public Instant getRecordedAt() { return recordedAt; }
     public Instant getReceivedAt() { return receivedAt; }
+    public String getSource() { return source; }
 }

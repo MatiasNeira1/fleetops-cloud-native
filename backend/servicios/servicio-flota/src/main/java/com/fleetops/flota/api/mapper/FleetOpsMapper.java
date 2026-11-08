@@ -13,12 +13,18 @@ import com.fleetops.flota.domain.Alert;
 import com.fleetops.flota.domain.Incident;
 import com.fleetops.flota.domain.Trip;
 import com.fleetops.flota.domain.VehiclePosition;
+import com.fleetops.flota.application.service.TelemetryProperties;
 import java.math.BigDecimal;
 import java.util.List;
 import org.springframework.stereotype.Component;
 
 @Component
 public class FleetOpsMapper {
+    private final TelemetryProperties telemetryProperties;
+
+    public FleetOpsMapper(TelemetryProperties telemetryProperties) {
+        this.telemetryProperties = telemetryProperties;
+    }
 
     public TripSummaryResponse toSummary(Trip trip) {
         return new TripSummaryResponse(
@@ -58,6 +64,9 @@ public class FleetOpsMapper {
                 List.of(trip.getOriginLatitude(), trip.getOriginLongitude()),
                 List.of(trip.getDestinationLatitude(), trip.getDestinationLongitude())
             ),
+            "SIMULATED_STRAIGHT_LINE",
+            telemetryProperties.maxSpeedKph(),
+            telemetryProperties.minFuelPercent(),
             alerts.stream().map(this::toAlert).toList(),
             List.of(
                 new TimelineItemResponse("Viaje creado", "completed"),
@@ -77,7 +86,8 @@ public class FleetOpsMapper {
             position.getSpeedKph(),
             position.getFuelPercent(),
             position.getOdometerKm(),
-            position.getRecordedAt()
+            position.getRecordedAt(),
+            position.getSource()
         );
     }
 

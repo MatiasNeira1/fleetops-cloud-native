@@ -153,4 +153,11 @@ public class Trip {
         }
         this.updatedAt = Instant.now();
     }
+
+    public void complete() {
+        this.status = TripStatus.COMPLETED;
+        this.progress = 100;
+        this.travelledDistanceKm = this.totalDistanceKm;
+        this.updatedAt = Instant.now();
+    }
 }

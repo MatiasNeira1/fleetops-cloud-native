@@ -19,6 +19,9 @@ public record TripDetailResponse(
     BigDecimal travelledDistanceKm,
     VehiclePositionResponse lastPosition,
     List<List<BigDecimal>> routeCoordinates,
+    String routeGeometryType,
+    BigDecimal speedLimitKph,
+    BigDecimal lowFuelThresholdPercent,
     List<AlertResponse> alerts,
     List<TimelineItemResponse> timeline
 ) {

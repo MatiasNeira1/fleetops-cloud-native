@@ -1,0 +1,89 @@
+name: FleetOps MCP
+
+on:
+  push:
+    paths:
+      - "backend/servicios/fleetops-mcp/**"
+      - "infra/terraform/fleetops-mcp/**"
+      - ".github/workflows/fleetops-mcp.yml"
+  pull_request:
+    paths:
+      - "backend/servicios/fleetops-mcp/**"
+      - "infra/terraform/fleetops-mcp/**"
+      - ".github/workflows/fleetops-mcp.yml"
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: "Publicar imagen y aplicar Terraform en fleetops-dev"
+        type: boolean
+        required: true
+        default: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: backend/servicios/fleetops-mcp/pom.xml
+      - name: Compilar y probar MCP
+        working-directory: backend/servicios/fleetops-mcp
+        run: bash ./mvnw -B -ntp verify
+      - name: Verificar formato Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.17.1
+      - name: Terraform fmt
+        working-directory: infra/terraform/fleetops-mcp
+        run: terraform fmt -check
+
+  deploy:
+    if: github.event_name == 'workflow_dispatch' && inputs.deploy
+    needs: verify
+    runs-on: ubuntu-latest
+    environment: fleetops-dev
+    permissions:
+      id-token: write
+      contents: read
+    env:
+      TF_VAR_mcp_client_token: ${{ secrets.MCP_CLIENT_TOKEN }}
+      TF_VAR_control_plane_api_key: ${{ secrets.CONTROL_PLANE_API_KEY }}
+      ARM_USE_OIDC: "true"
+      ARM_USE_AZUREAD: "true"
+      ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.17.1
+      - name: Publicar imagen en ACR
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="sha-${GITHUB_SHA}"
+          az acr build --registry acrmunicipalidaddoc --image "fleetops/fleetops-mcp:${tag}" backend/servicios/fleetops-mcp
+          digest="$(az acr repository show --name acrmunicipalidaddoc --image "fleetops/fleetops-mcp:${tag}" --query digest -o tsv)"
+          test "${digest#sha256:}" != "$digest"
+          echo "TF_VAR_mcp_image=acrmunicipalidaddoc.azurecr.io/fleetops/fleetops-mcp@${digest}" >> "$GITHUB_ENV"
+      - name: Aplicar infraestructura MCP
+        working-directory: infra/terraform/fleetops-mcp
+        shell: bash
+        run: |
+          set -euo pipefail
+          terraform init -input=false
+          terraform validate
+          terraform plan -input=false
+          terraform apply -input=false -auto-approve

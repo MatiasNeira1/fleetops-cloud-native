@@ -11,6 +11,7 @@ public record VehiclePositionResponse(
     BigDecimal speedKph,
     BigDecimal fuelPercent,
     BigDecimal odometerKm,
-    Instant recordedAt
+    Instant recordedAt,
+    String source
 ) {
 }

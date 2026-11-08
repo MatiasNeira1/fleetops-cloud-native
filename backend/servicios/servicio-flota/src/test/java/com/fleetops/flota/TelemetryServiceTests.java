@@ -133,6 +133,30 @@ class TelemetryServiceTests {
         verify(publisher, never()).publishAlertAfterCommit(any(), any());
     }
 
+    @Test
+    void persistentConditionsDoNotCreateAnotherAlert() {
+        prepareProcessing();
+        var previous = new com.fleetops.flota.domain.VehiclePosition(
+            "vehicle-1", "trip-1", new BigDecimal("-33.4"), new BigDecimal("-70.6"),
+            new BigDecimal("105"), new BigDecimal("8"), new BigDecimal("1234"),
+            Instant.parse("2026-10-11T11:59:55Z"), Instant.now());
+        when(positionRepository.findFirstByVehicleIdOrderByRecordedAtDesc("vehicle-1"))
+            .thenReturn(Optional.of(previous));
+        service.process(payload("105", "8"));
+        verify(alertRepository, never()).save(any(Alert.class));
+        verify(publisher, never()).publishAlertAfterCommit(any(), any());
+    }
+
+    @Test
+    void openAlertSuppressesAnotherCrossing() {
+        prepareProcessing();
+        when(alertRepository.existsByVehicleIdAndTypeAndStatus("vehicle-1",
+            com.fleetops.flota.domain.AlertType.SPEEDING,
+            com.fleetops.flota.domain.AlertStatus.OPEN)).thenReturn(true);
+        service.process(payload("105", "50"));
+        verify(alertRepository, never()).save(any(Alert.class));
+    }
+
     private void prepareProcessing() {
         when(telemetryEventRepository.existsById("event-1")).thenReturn(false);
         when(vehicleRepository.existsById("vehicle-1")).thenReturn(true);
