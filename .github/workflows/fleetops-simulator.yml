@@ -63,6 +63,14 @@ jobs:
         run: bash ./mvnw -B -ntp clean verify
       - name: Probar frontend
         working-directory: frontend
+        env:
+          VITE_API_BASE_URL: https://api.example.invalid/fleetops
+          VITE_ENTRA_TENANT_ID: 00000000-0000-0000-0000-000000000001
+          VITE_ENTRA_CLIENT_ID: 00000000-0000-0000-0000-000000000002
+          VITE_ENTRA_API_CLIENT_ID: 00000000-0000-0000-0000-000000000003
+          VITE_ENTRA_REDIRECT_URI: https://frontend.example.invalid/
+          VITE_ENTRA_POST_LOGOUT_REDIRECT_URI: https://frontend.example.invalid/
+          VITE_API_SCOPE: api://00000000-0000-0000-0000-000000000003/api.access
         run: |
           npm ci
           npm test -- --run
