@@ -1,0 +1,3 @@
+# Copia como terraform.tfvars y reemplaza el digest después de publicar la imagen.
+# No incluyas secretos aquí; usa TF_VAR_mcp_client_token y TF_VAR_control_plane_api_key.
+mcp_image = "acrmunicipalidaddoc.azurecr.io/fleetops/fleetops-mcp@sha256:REEMPLAZAR_DIGEST"

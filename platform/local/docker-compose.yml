@@ -91,6 +91,7 @@ services:
         condition: service_healthy
     environment:
       SERVER_PORT: 8080
+      SPRING_PROFILES_ACTIVE: local
       POSTGRES_HOST: postgres
       POSTGRES_PORT: 5432
       POSTGRES_DB: ${POSTGRES_DB:-fleetops}
@@ -102,6 +103,7 @@ services:
       FLEETOPS_DEMO_DATA_ENABLED: ${FLEETOPS_DEMO_DATA_ENABLED:-true}
       FLEETOPS_TELEMETRY_MAX_SPEED_KPH: ${FLEETOPS_TELEMETRY_MAX_SPEED_KPH:-90}
       FLEETOPS_TELEMETRY_MIN_FUEL_PERCENT: ${FLEETOPS_TELEMETRY_MIN_FUEL_PERCENT:-15}
+      FLEETOPS_SIMULATOR_SERVICE_TOKEN: ${FLEETOPS_SIMULATOR_SERVICE_TOKEN:?Define un token de servicio para finalizar viajes simulados}
       RABBITMQ_ALERTS_EXCHANGE: ${RABBITMQ_ALERTS_EXCHANGE:-fleetops.events.topic}
     ports:
       - "8080:8080"
@@ -148,6 +150,35 @@ services:
       start_period: 40s
     networks:
       - fleetops-local
+
+  fleetops-simulator:
+    image: fleetops/fleetops-simulator:local
+    build:
+      context: ../../backend/servicios/fleetops-simulator
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      servicio-flota:
+        condition: service_started
+      rabbitmq-1:
+        condition: service_healthy
+    environment:
+      SIMULATOR_ENABLED: ${SIMULATOR_ENABLED:-false}
+      SIMULATOR_BIND_ADDRESS: 0.0.0.0
+      SIMULATOR_ADMIN_TOKEN: ${SIMULATOR_ADMIN_TOKEN:?Define un token administrativo del simulador}
+      SIMULATOR_SERVICE_TOKEN: ${FLEETOPS_SIMULATOR_SERVICE_TOKEN:?Define el token de servicio compartido con flota}
+      FLEETOPS_FLOTA_API_URL: http://servicio-flota:8080
+      SPRING_RABBITMQ_ADDRESSES: rabbitmq-1:5672,rabbitmq-2:5672
+      SPRING_RABBITMQ_USERNAME: ${SPRING_RABBITMQ_USERNAME:?Define usuario RabbitMQ}
+      SPRING_RABBITMQ_PASSWORD: ${SPRING_RABBITMQ_PASSWORD:?Define password RabbitMQ}
+      SIMULATOR_INTERVAL: ${SIMULATOR_INTERVAL:-5s}
+      SIMULATOR_MAX_VEHICLES: ${SIMULATOR_MAX_VEHICLES:-3}
+      SIMULATOR_MAX_FAILURES: ${SIMULATOR_MAX_FAILURES:-5}
+    ports:
+      - "127.0.0.1:8089:8089"
+    networks:
+      - fleetops-local
+
 volumes:
   fleetops-postgres-data:
     name: fleetops-postgres-data

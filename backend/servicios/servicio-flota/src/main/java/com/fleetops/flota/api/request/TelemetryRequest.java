@@ -16,6 +16,13 @@ public record TelemetryRequest(
     @NotNull @DecimalMin("0.0") BigDecimal speedKph,
     @NotNull @DecimalMin("0.0") @DecimalMax("100.0") BigDecimal fuelPercent,
     @NotNull @DecimalMin("0.0") BigDecimal odometerKm,
-    @NotNull Instant recordedAt
+    @NotNull Instant recordedAt,
+    String source
 ) {
+    public TelemetryRequest(String eventId, String vehicleId, String tripId, BigDecimal latitude,
+                            BigDecimal longitude, BigDecimal speedKph, BigDecimal fuelPercent,
+                            BigDecimal odometerKm, Instant recordedAt) {
+        this(eventId, vehicleId, tripId, latitude, longitude, speedKph, fuelPercent,
+            odometerKm, recordedAt, null);
+    }
 }

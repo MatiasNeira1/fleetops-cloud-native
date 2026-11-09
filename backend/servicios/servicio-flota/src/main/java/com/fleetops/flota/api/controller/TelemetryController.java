@@ -4,6 +4,8 @@ import com.fleetops.flota.api.request.TelemetryRequest;
 import com.fleetops.flota.api.response.TelemetryAcceptedResponse;
 import com.fleetops.flota.application.service.TelemetryService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -26,7 +28,11 @@ public class TelemetryController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.ACCEPTED)
-    @Operation(summary = "Aceptar telemetria y publicarla en RabbitMQ")
+    @Operation(summary = "Aceptar telemetría y publicarla en RabbitMQ", description = "La respuesta 202 confirma la aceptación; la persistencia y las alertas se procesan de forma asíncrona.")
+    @ApiResponses({@ApiResponse(responseCode = "202", description = "Telemetría aceptada"),
+        @ApiResponse(responseCode = "400", description = "Telemetría inválida"),
+        @ApiResponse(responseCode = "404", description = "Vehículo o viaje inexistente"),
+        @ApiResponse(responseCode = "409", description = "Conflicto con el estado del viaje")})
     public TelemetryAcceptedResponse receive(
         @Valid @RequestBody TelemetryRequest request
     ) {

@@ -26,6 +26,9 @@ interface ApiPerson {
 interface ApiPosition {
   latitude: number | string;
   longitude: number | string;
+  speedKph: number | string;
+  fuelPercent: number | string;
+  source?: string | null;
 }
 
 interface ApiTimelineItem {
@@ -61,6 +64,9 @@ interface ApiTripSummary {
 interface ApiTripDetail extends ApiTripSummary {
   lastPosition: ApiPosition | null;
   routeCoordinates: Array<[number | string, number | string]>;
+  routeGeometryType?: string;
+  speedLimitKph?: number | string;
+  lowFuelThresholdPercent?: number | string;
   alerts: ApiAlert[];
   timeline: ApiTimelineItem[];
 }
@@ -149,6 +155,13 @@ function toTrip(detail: ApiTripDetail): Trip {
     elapsedTime: formatElapsedTime(detail.departureTime),
     currentPosition,
     routeCoordinates,
+    routeGeometryType: detail.routeGeometryType,
+    speedKph: detail.lastPosition ? Number(detail.lastPosition.speedKph) : undefined,
+    fuelPercent: detail.lastPosition ? Number(detail.lastPosition.fuelPercent) : undefined,
+    speedLimitKph: detail.speedLimitKph == null ? undefined : Number(detail.speedLimitKph),
+    lowFuelThresholdPercent: detail.lowFuelThresholdPercent == null
+      ? undefined : Number(detail.lowFuelThresholdPercent),
+    telemetrySource: detail.lastPosition?.source ?? undefined,
     timeline: detail.timeline.map((item) => ({
       label: item.label,
       time: "",

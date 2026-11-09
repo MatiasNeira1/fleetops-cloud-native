@@ -1,0 +1,9 @@
+.env
+.env.*
+!.env.example
+target/
+.mvn/
+mvnw
+mvnw.cmd
+.git/
+*.log

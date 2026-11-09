@@ -54,6 +54,12 @@ export interface Trip {
   elapsedTime: string;
   currentPosition: Coordinates;
   routeCoordinates: Coordinates[];
+  routeGeometryType?: string;
+  speedKph?: number;
+  fuelPercent?: number;
+  speedLimitKph?: number;
+  lowFuelThresholdPercent?: number;
+  telemetrySource?: string;
   timeline: TripTimelineItem[];
   alerts: TripAlert[];
 }

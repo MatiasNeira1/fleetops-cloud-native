@@ -4,6 +4,8 @@ import com.fleetops.flota.api.request.UpdateAlertStatusRequest;
 import com.fleetops.flota.api.response.AlertResponse;
 import com.fleetops.flota.application.service.AlertService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -25,6 +27,10 @@ public class AlertController {
 
     @PatchMapping("/{id}/status")
     @Operation(summary = "Cambiar estado de una alerta")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Estado actualizado"),
+        @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+        @ApiResponse(responseCode = "404", description = "Alerta inexistente"),
+        @ApiResponse(responseCode = "409", description = "Transición de estado no permitida")})
     public AlertResponse updateStatus(
         @PathVariable Long id,
         @Valid @RequestBody UpdateAlertStatusRequest request

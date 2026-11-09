@@ -45,7 +45,8 @@ Estas tecnologías representan la arquitectura objetivo. No todos los componente
 ## Estructura del repositorio
 
 - `backend/`: futuros microservicios backend.
-- `frontend/`: futura aplicación web.
+- `frontend/`: panel web de FleetOps.
+- `backend/servicios/fleetops-simulator/`: simulación controlada de telemetría; consulta [guía local y Azure](docs/fleetops-simulator.md).
 - `infra/`: infraestructura como código.
 - `contracts/`: contratos OpenAPI, AsyncAPI y schemas.
 - `docs/`: documentación técnica, arquitectura, ADRs, runbooks y threat model.
@@ -66,19 +67,31 @@ Más detalle en [docs/environments.md](docs/environments.md).
 
 La configuración local de RabbitMQ en clúster de dos nodos está documentada en [docs/rabbitmq-local.md](docs/rabbitmq-local.md).
 El procesamiento asíncrono de alertas con `ms-alerta` está documentado en [docs/ms-alerta-rabbitmq.md](docs/ms-alerta-rabbitmq.md).
+El servidor MCP de solo lectura está documentado en [docs/fleetops-mcp.md](docs/fleetops-mcp.md). Su despliegue privado en Azure se describe en [docs/fleetops-mcp-azure.md](docs/fleetops-mcp-azure.md).
 La imagen Docker del backend `servicio-flota` está documentada en [docs/backend-docker.md](docs/backend-docker.md).
+
+## Documentación OpenAPI
+
+Cada API publica su contrato generado por Springdoc y una interfaz Swagger UI:
+
+| Servicio | Swagger UI | OpenAPI JSON |
+| --- | --- | --- |
+| Flota (puerto 8080) | `http://localhost:8080/swagger-ui/index.html` | `http://localhost:8080/v3/api-docs` |
+| Alertas (puerto 8081) | `http://localhost:8081/swagger-ui/index.html` | `http://localhost:8081/v3/api-docs` |
+
+El contrato vivo refleja los controladores y distingue las dos APIs, que tienen rutas de alertas superpuestas. [`fleetops-openapi.json`](fleetops-openapi.json) y [`ms-alerta-openapi.json`](ms-alerta-openapi.json) son capturas locales de ambos contratos; para integraciones usa el JSON servido por la instancia que estés ejecutando.
 
 ## Desarrollo local
 
 1. Copia el archivo de ejemplo:
 
    ```bash
-   cp .env.production.local.example .env.production.local
+   cp .env.example .env
    ```
 
 2. Ajusta los valores locales si corresponde.
 
-3. Levanta la infraestructura local.
+3. Levanta PostgreSQL, RabbitMQ y ambas APIs locales.
 
    Windows:
 
@@ -104,21 +117,17 @@ La imagen Docker del backend `servicio-flota` está documentada en [docs/backend
    make local-ps
    ```
 
-5. Ejecuta backend y frontend localmente:
-
-   ```powershell
-   ./scripts/windows/local-backend-run.ps1
-   ```
-
-   En otra terminal:
+5. Inicia el frontend en otra terminal:
 
    ```powershell
    cd frontend
    Copy-Item .env.example .env.local
+   # En .env.local, configura VITE_API_BASE_URL=http://localhost:8080
+   npm install
    npm run dev
    ```
 
-   `frontend/.env.example` define `VITE_API_BASE_URL`. En desarrollo local puede quedar vacío para usar el proxy de Vite hacia `http://localhost:8080`. Si quieres llamar directo al backend, usa `VITE_API_BASE_URL=http://localhost:8080`.
+   El proxy de Vite usa `VITE_API_BASE_URL` como destino; en local configúralo con `http://localhost:8080`. El inicio de sesión del frontend requiere una aplicación Entra configurada para la URI de redirección local.
 
 6. Detén el entorno:
 

@@ -66,6 +66,20 @@ export function TripDetails({
         </div>
       </dl>
 
+      <dl className="trip-summary" aria-label="Telemetria actual">
+        <div><dt>Velocidad</dt><dd>{trip.speedKph == null ? "Sin datos" : `${trip.speedKph.toFixed(1)} km/h`}</dd></div>
+        <div><dt>Combustible</dt><dd>{trip.fuelPercent == null ? "Sin datos" : `${trip.fuelPercent.toFixed(1)} %`}</dd></div>
+        <div><dt>Estado operativo</dt><dd>{trip.speedKph == null ? "Sin datos"
+          : [
+              trip.speedKph === 0 ? "Detenido" : null,
+              trip.speedLimitKph != null && trip.speedKph > trip.speedLimitKph ? "Exceso de velocidad" : null,
+              trip.lowFuelThresholdPercent != null && trip.fuelPercent != null
+                && trip.fuelPercent < trip.lowFuelThresholdPercent ? "Combustible bajo" : null,
+            ].filter(Boolean).join(" · ") || "Normal"}</dd></div>
+        <div><dt>Trayectoria</dt><dd>{trip.routeGeometryType === "SIMULATED_STRAIGHT_LINE"
+          ? "Linea simulada entre origen y destino" : "Ruta registrada"}</dd></div>
+      </dl>
+
       <TripMap trip={trip} />
       <TripProgress trip={trip} />
       <TripTimeline timeline={trip.timeline} />

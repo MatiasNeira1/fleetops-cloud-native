@@ -166,9 +166,11 @@ Las definiciones RabbitMQ permiten crear la topología antes de iniciar el backe
 
 - Swagger UI: `http://localhost:8080/swagger-ui/index.html`
 - JSON: `http://localhost:8080/v3/api-docs`
+- Swagger UI de `ms-alerta`: `http://localhost:8081/swagger-ui/index.html`
+- JSON de `ms-alerta`: `http://localhost:8081/v3/api-docs`
 - Health: `http://localhost:8080/actuator/health`
 
-Springdoc expone OpenAPI para revisión e importación posterior en APIM. La API todavía no valida JWT y no simula autenticación. Azure, APIM, MSAL y Entra ID no se configuran aquí.
+Springdoc genera contratos separados para flota y alertas. Los controladores documentan métodos, parámetros, cuerpos de solicitud, respuestas exitosas y códigos de error. `fleetops-openapi.json` y `ms-alerta-openapi.json` guardan capturas locales de ambos contratos. Usa el JSON servido en cada puerto para revisión o importación en APIM. La autenticación Entra del frontend no implica que estas APIs validen JWT; revisa la seguridad del backend antes de exponerlas directamente.
 
 ## Compatibilidad con React
 

@@ -5,6 +5,8 @@ import com.fleetops.flota.api.request.UpdateIncidentStatusRequest;
 import com.fleetops.flota.api.response.IncidentResponse;
 import com.fleetops.flota.application.service.IncidentService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import java.net.URI;
@@ -28,7 +30,11 @@ public class IncidentController {
     }
 
     @PostMapping
-    @Operation(summary = "Registrar un incidente")
+    @Operation(summary = "Registrar un incidente", description = "Crea el incidente y devuelve su representación con la cabecera Location.")
+    @ApiResponses({@ApiResponse(responseCode = "201", description = "Incidente creado"),
+        @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+        @ApiResponse(responseCode = "404", description = "Viaje o vehículo inexistente"),
+        @ApiResponse(responseCode = "409", description = "Conflicto de estado")})
     public ResponseEntity<IncidentResponse> create(
         @Valid @RequestBody CreateIncidentRequest request
     ) {
@@ -40,6 +46,10 @@ public class IncidentController {
 
     @PatchMapping("/{id}/status")
     @Operation(summary = "Cambiar el estado de un incidente")
+    @ApiResponses({@ApiResponse(responseCode = "200", description = "Estado actualizado"),
+        @ApiResponse(responseCode = "400", description = "Solicitud inválida"),
+        @ApiResponse(responseCode = "404", description = "Incidente inexistente"),
+        @ApiResponse(responseCode = "409", description = "Transición de estado no permitida")})
     public IncidentResponse updateStatus(
         @PathVariable Long id,
         @Valid @RequestBody UpdateIncidentStatusRequest request

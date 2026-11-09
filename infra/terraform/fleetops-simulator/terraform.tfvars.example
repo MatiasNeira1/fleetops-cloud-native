@@ -1,0 +1,7 @@
+simulator_image      = "acrmunicipalidaddoc.azurecr.io/fleetops/fleetops-simulator@sha256:REPLACE_WITH_IMAGE_DIGEST"
+simulator_enabled    = false
+simulator_max_failures = 5
+rabbitmq_addresses   = "REPLACE_WITH_EXISTING_RABBITMQ_ADDRESS:5672"
+rabbitmq_username    = "REPLACE_WITH_EXISTING_RABBITMQ_USER"
+# Secrets are provided through TF_VAR_simulator_admin_token,
+# TF_VAR_simulator_service_token and TF_VAR_rabbitmq_password.

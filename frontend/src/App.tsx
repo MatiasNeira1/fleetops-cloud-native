@@ -88,8 +88,26 @@ function Dashboard({ username, onLogout, onRenew }: DashboardProps) {
 
     void loadInitialTrips();
 
+    let inFlight = false;
+    const refresh = window.setInterval(() => {
+      if (!isMounted || inFlight || document.visibilityState === "hidden") return;
+      inFlight = true;
+      void getActiveTrips().then((activeTrips) => {
+        if (!isMounted) return;
+        setTrips(activeTrips);
+        setSelectedTripId((current) =>
+          current && activeTrips.some((trip) => trip.id === current)
+            ? current : activeTrips[0]?.id ?? null
+        );
+        setError(null);
+      }).catch((caught) => {
+        if (isMounted) setError(caught instanceof Error ? caught.message : "No fue posible actualizar viajes.");
+      }).finally(() => { inFlight = false; });
+    }, 5000);
+
     return () => {
       isMounted = false;
+      window.clearInterval(refresh);
     };
   }, []);
 

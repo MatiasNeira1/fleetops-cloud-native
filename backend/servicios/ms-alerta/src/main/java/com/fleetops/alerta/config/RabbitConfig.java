@@ -6,8 +6,6 @@ import org.springframework.amqp.core.DirectExchange;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.core.QueueBuilder;
 import org.springframework.amqp.core.TopicExchange;
-import org.springframework.amqp.support.converter.JacksonJsonMessageConverter;
-import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -52,8 +50,4 @@ public class RabbitConfig {
         return BindingBuilder.bind(queue).to(exchange).with(key);
     }
 
-    @Bean
-    MessageConverter jsonMessageConverter() {
-        return new JacksonJsonMessageConverter();
-    }
 }

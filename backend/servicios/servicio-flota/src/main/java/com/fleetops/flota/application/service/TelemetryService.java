@@ -1,6 +1,7 @@
 package com.fleetops.flota.application.service;
 
 import com.fleetops.flota.api.error.ResourceNotFoundException;
+import com.fleetops.flota.api.error.ConflictException;
 import com.fleetops.flota.api.request.TelemetryRequest;
 import com.fleetops.flota.api.response.TelemetryAcceptedResponse;
 import com.fleetops.flota.domain.Alert;
@@ -20,6 +21,8 @@ import com.fleetops.flota.messaging.dto.TelemetryReceivedEvent;
 import com.fleetops.flota.messaging.dto.AlertCreatedEvent;
 import com.fleetops.flota.messaging.producer.DomainEventPublisher;
 import java.time.Instant;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -89,8 +92,30 @@ public class TelemetryService {
             return;
         }
         validateReferences(payload);
+        VehiclePosition previous = positionRepository
+            .findFirstByVehicleIdOrderByRecordedAtDesc(payload.vehicleId()).orElse(null);
         if (payload.tripId() != null) {
-            tripRepository.findById(payload.tripId()).ifPresent(Trip::recordTelemetry);
+            tripRepository.findById(payload.tripId()).ifPresent(trip -> {
+                trip.recordTelemetry();
+                if (trip.getOriginLatitude() == null || trip.getOriginLongitude() == null
+                    || trip.getDestinationLatitude() == null || trip.getDestinationLongitude() == null
+                    || trip.getTotalDistanceKm() == null) {
+                    return;
+                }
+                double startLat = trip.getOriginLatitude().doubleValue();
+                double startLon = trip.getOriginLongitude().doubleValue();
+                double deltaLat = trip.getDestinationLatitude().doubleValue() - startLat;
+                double deltaLon = trip.getDestinationLongitude().doubleValue() - startLon;
+                double denominator = deltaLat * deltaLat + deltaLon * deltaLon;
+                if (denominator > 0) {
+                    double fraction = ((payload.latitude().doubleValue() - startLat) * deltaLat
+                        + (payload.longitude().doubleValue() - startLon) * deltaLon) / denominator;
+                    fraction = Math.max(trip.getProgress() / 100.0, Math.min(1.0, Math.max(0.0, fraction)));
+                    trip.updateProgress((int) Math.round(fraction * 100),
+                        trip.getTotalDistanceKm().multiply(BigDecimal.valueOf(fraction))
+                            .setScale(2, RoundingMode.HALF_UP));
+                }
+            });
         }
         positionRepository.save(new VehiclePosition(
             payload.vehicleId(),
@@ -101,22 +126,28 @@ public class TelemetryService {
             payload.fuelPercent(),
             payload.odometerKm(),
             payload.recordedAt(),
-            Instant.now()
+            Instant.now(),
+            payload.source()
         ));
         telemetryEventRepository.save(new TelemetryEvent(
             payload.eventId(),
             payload.vehicleId(),
             payload.tripId(),
-            Instant.now()
+            Instant.now(),
+            payload.source()
         ));
-        createTelemetryAlerts(payload, correlationId);
+        createTelemetryAlerts(payload, correlationId, previous);
     }
 
-    private void createTelemetryAlerts(TelemetryEventPayload payload, String correlationId) {
+    private void createTelemetryAlerts(TelemetryEventPayload payload, String correlationId,
+                                       VehiclePosition previous) {
         if (payload.tripId() == null) {
             return;
         }
-        if (payload.speedKph().compareTo(properties.maxSpeedKph()) > 0) {
+        if (payload.speedKph().compareTo(properties.maxSpeedKph()) > 0
+            && (previous == null || previous.getSpeedKph().compareTo(properties.maxSpeedKph()) <= 0)
+            && !alertRepository.existsByVehicleIdAndTypeAndStatus(
+                payload.vehicleId(), AlertType.SPEEDING, AlertStatus.OPEN)) {
             publishAlert(alertRepository.save(new Alert(
                 payload.tripId(),
                 payload.vehicleId(),
@@ -128,7 +159,10 @@ public class TelemetryService {
                 Instant.now()
             )), payload.speedKph(), properties.maxSpeedKph(), correlationId);
         }
-        if (payload.fuelPercent().compareTo(properties.minFuelPercent()) < 0) {
+        if (payload.fuelPercent().compareTo(properties.minFuelPercent()) < 0
+            && (previous == null || previous.getFuelPercent().compareTo(properties.minFuelPercent()) >= 0)
+            && !alertRepository.existsByVehicleIdAndTypeAndStatus(
+                payload.vehicleId(), AlertType.LOW_FUEL, AlertStatus.OPEN)) {
             publishAlert(alertRepository.save(new Alert(
                 payload.tripId(),
                 payload.vehicleId(),
@@ -176,6 +210,10 @@ public class TelemetryService {
             if (!trip.getVehicleId().equals(request.vehicleId())) {
                 throw new IllegalArgumentException("El vehiculo no corresponde al viaje informado");
             }
+            if (trip.getStatus() == com.fleetops.flota.domain.TripStatus.COMPLETED
+                || trip.getStatus() == com.fleetops.flota.domain.TripStatus.CANCELLED) {
+                throw new ConflictException("El viaje ya no admite telemetria");
+            }
         }
     }
 
@@ -188,6 +226,10 @@ public class TelemetryService {
                 .orElseThrow(() -> new ResourceNotFoundException("No existe el viaje " + payload.tripId()));
             if (!trip.getVehicleId().equals(payload.vehicleId())) {
                 throw new IllegalArgumentException("El vehiculo no corresponde al viaje informado");
+            }
+            if (trip.getStatus() == com.fleetops.flota.domain.TripStatus.COMPLETED
+                || trip.getStatus() == com.fleetops.flota.domain.TripStatus.CANCELLED) {
+                throw new ConflictException("El viaje ya no admite telemetria");
             }
         }
     }
@@ -202,7 +244,8 @@ public class TelemetryService {
             request.speedKph(),
             request.fuelPercent(),
             request.odometerKm(),
-            request.recordedAt()
+            request.recordedAt(),
+            request.source()
         );
     }
 }
